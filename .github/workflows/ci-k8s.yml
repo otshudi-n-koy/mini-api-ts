@@ -1,0 +1,54 @@
+name: CI Pipeline with Kubernetes
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  k8s-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Minikube
+        uses: medyagh/setup-minikube@v0.0.14
+        with:
+          kubernetes-version: v1.30.0
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/postgres-service.yaml
+          kubectl rollout status deployment/postgres-deployment
+
+      - name: Port-forward Postgres
+        run: |
+          nohup kubectl port-forward svc/postgres-service 5433:5432 &
+          sleep 5
+
+      - name: Reset database schema
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql -h localhost -p 5433 -U miniapiuser -d postgres -f scripts/reset.sql
+        env:
+          PGPASSWORD: miniapipass
+
+      - name: Run tests
+        run: npm test
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5433
+          POSTGRES_USER: miniapiuser
+          POSTGRES_PASSWORD: miniapipass
+          POSTGRES_DB: miniapidb
