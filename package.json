@@ -7,22 +7,37 @@
     "dev": "nodemon --watch src --exec \"node --loader ts-node/esm\" src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint ./src --ext .ts",
+    "lint:fix": "eslint ./src --ext .ts --fix",
+    "db:forward": "kubectl port-forward svc/postgres-service 5433:5432",
+    "db:test": "node --loader ts-node/esm test-db.ts",
+    "db:dev": "start npm run db:forward && npm run db:test",
+    "db:watch": "nodemon --exec node --loader ts-node/esm test-db.ts",
+    "db:reset_": "node --loader ts-node/esm scripts/reset.ts",
+    "db:reset": "psql -h localhost -p 5433 -U miniapiuser -d postgres -f scripts/reset.sql"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.5",
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "eslint": "^9.39.1",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
