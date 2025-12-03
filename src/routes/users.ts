@@ -1,40 +1,44 @@
-import { Router } from "express";
-const router = Router();
+import { Router } from 'express';
+import { Pool } from 'pg';
+import type { User } from '../types/user.js';
 
-/**
- * @openapi
- * /users:
- *   get:
- *     summary: Liste des utilisateurs
- *     responses:
- *       200:
- *         description: Retourne la liste des utilisateurs
- */
-router.get("/", (_req, res) => {
-  res.json([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]);
+const router = Router();
+const pool = new Pool(); // config via .env
+
+// Ajouter un utilisateur
+router.post('/add', async (req, res) => {
+  try {
+    const user: User = req.body; // 👈 typage explicite
+
+    const result = await pool.query(
+      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+      [user.name, user.email]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error('Erreur SQL :', err.message);
+      res.status(500).json({ error: 'Erreur lors de l\'insertion' });
+    } else {
+      res.status(500).json({ error: 'Erreur inconnue' });
+    }
+  }
 });
 
-/**
- * @openapi
- * /users/{id}:
- *   get:
- *     summary: Récupère un utilisateur par ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Utilisateur trouvé
- *       404:
- *         description: Utilisateur non trouvé
- */
-router.get("/:id", (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (Number.isNaN(id)) return res.status(400).json({ error: "ID invalide" });
-  res.json({ id, name: `User${id}` });
+// Lister les utilisateurs
+router.get('/', async (_req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows as User[]);
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error('Erreur SQL :', err.message);
+      res.status(500).json({ error: 'Erreur lors de la récupération' });
+    } else {
+      res.status(500).json({ error: 'Erreur inconnue' });
+    }
+  }
 });
 
 export default router;
