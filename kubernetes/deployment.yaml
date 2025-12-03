@@ -15,6 +15,10 @@ spec:
       containers:
         - name: mini-api-ts
           image: otshudi/mini-api-ts:latest
-          imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+            - secretRef:
+                name: postgres-secret
