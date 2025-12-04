@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: db-migrate
+          image: postgres:15
+          command: ["psql"]
+          args:
+            [
+              "-h", "postgres-service",
+              "-U", "miniapiuser",
+              "-d", "miniapidb",
+              "-f", "/migrations/migrate.sql"
+            ]
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+            - configMapRef:
+                name: postgres-config
+          volumeMounts:
+            - name: migrate-sql
+              mountPath: /migrations
+      restartPolicy: Never
+      volumes:
+        - name: migrate-sql
+          configMap:
+            name: migrate-sql-config
