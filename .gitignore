@@ -8,6 +8,12 @@ build/
 # TypeScript build info
 *.tsbuildinfo
 
+# Test artifacts
+test-db.ts
+test-db.js
+test-db.d.ts
+test-db.*.map
+
 # Logs
 logs/
 *.log
