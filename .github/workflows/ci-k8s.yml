@@ -38,13 +38,27 @@ jobs:
         run: |
           kubectl apply -f k8s/reset-sql-config.yaml
           kubectl apply -f k8s/db-reset-job.yaml
-          kubectl wait --for=condition=complete job/db-reset-job --timeout=60s
+          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s || {
+            echo "Reset job failed or timed out. Checking logs..."
+            kubectl get jobs
+            kubectl get pods -l job-name=db-reset-job
+            kubectl logs -l job-name=db-reset-job --tail=100
+            kubectl describe job db-reset-job
+            exit 1
+          }
 
       - name: Run DB migrations
         run: |
           kubectl apply -f k8s/migrate-sql-config.yaml
           kubectl apply -f k8s/db-migrate-job.yaml
-          kubectl wait --for=condition=complete job/db-migrate-job --timeout=60s
+          kubectl wait --for=condition=complete job/db-migrate-job --timeout=120s || {
+            echo "Migration job failed or timed out. Checking logs..."
+            kubectl get jobs
+            kubectl get pods -l job-name=db-migrate-job
+            kubectl logs -l job-name=db-migrate-job --tail=100
+            kubectl describe job db-migrate-job
+            exit 1
+          }
 
       - name: Run tests
         run: npm test
