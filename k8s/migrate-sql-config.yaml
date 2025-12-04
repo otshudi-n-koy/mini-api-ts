@@ -4,14 +4,17 @@ metadata:
   name: migrate-sql-config
 data:
   migrate.sql: |
-    -- Exemple de migration : ajout d'une colonne
-    ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
-
-    -- Exemple : nouvelle table
-    CREATE TABLE orders (
+    -- Create tables
+    DROP TABLE IF EXISTS users CASCADE;
+    CREATE TABLE users (
       id SERIAL PRIMARY KEY,
-      user_id INT REFERENCES users(id),
-      product VARCHAR(100),
-      quantity INT,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    -- Seed initial data
+    INSERT INTO users (name, email) VALUES
+    ('Alice', 'alice@example.com'),
+    ('Bob', 'bob@example.com'),
+    ('Charlie', 'charlie@example.com');
