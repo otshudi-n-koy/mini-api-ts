@@ -16,11 +16,20 @@ spec:
           args:
             - |
               echo "Waiting for Postgres to be ready...";
+              MAX_ATTEMPTS=30
+              ATTEMPT=0
               until pg_isready -h postgres-service -p 5432 -U "$POSTGRES_USER"; do
+                ATTEMPT=$((ATTEMPT+1))
+                if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+                  echo "ERROR: Postgres not ready after $MAX_ATTEMPTS attempts"
+                  exit 1
+                fi
+                echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Postgres not ready, waiting..."
                 sleep 2;
               done;
               echo "Postgres is ready. Running migration script...";
               psql -v ON_ERROR_STOP=1 -h postgres-service -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/migrate.sql
+              echo "Migration completed successfully"
           envFrom:
             - secretRef:
                 name: postgres-secret
