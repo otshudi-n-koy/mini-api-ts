@@ -3,19 +3,24 @@ kind: Job
 metadata:
   name: db-reset-job
 spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
       containers:
         - name: db-reset
           image: postgres:15
-          command: ["psql"]
+          command:
+            - sh
+            - -c
           args:
-            [
-              "-h", "postgres-service",
-              "-U", "miniapiuser",
-              "-d", "postgres",
-              "-f", "/scripts/reset.sql"
-            ]
+            - |
+              echo "Waiting for Postgres to be ready...";
+              until pg_isready -h postgres-service -p 5432 -U "$POSTGRES_USER"; do
+                sleep 2;
+              done;
+              echo "Postgres is ready. Running reset script...";
+              psql -v ON_ERROR_STOP=1 -h postgres-service -p 5432 -U "$POSTGRES_USER" -d postgres -f /scripts/reset.sql
           envFrom:
             - secretRef:
                 name: postgres-secret
