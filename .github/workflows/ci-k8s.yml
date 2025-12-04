@@ -78,4 +78,11 @@ jobs:
         run: |
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/api-service.yaml
-          kubectl rollout status deployment/api-deployment
+          kubectl rollout status deployment/api-deployment --timeout=180s || {
+            echo "API deployment failed or timed out. Checking status..."
+            kubectl get deployments
+            kubectl get pods -l app=mini-api
+            kubectl describe pod -l app=mini-api
+            kubectl logs -l app=mini-api --tail=100
+            exit 1
+          }
