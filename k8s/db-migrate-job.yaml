@@ -3,19 +3,24 @@ kind: Job
 metadata:
   name: db-migrate-job
 spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
       containers:
         - name: db-migrate
           image: postgres:15
-          command: ["psql"]
+          command:
+            - sh
+            - -c
           args:
-            [
-              "-h", "postgres-service",
-              "-U", "miniapiuser",
-              "-d", "miniapidb",
-              "-f", "/migrations/migrate.sql"
-            ]
+            - |
+              echo "Waiting for Postgres to be ready...";
+              until pg_isready -h postgres-service -p 5432 -U "$POSTGRES_USER"; do
+                sleep 2;
+              done;
+              echo "Postgres is ready. Running migration script...";
+              psql -v ON_ERROR_STOP=1 -h postgres-service -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /migrations/migrate.sql
           envFrom:
             - secretRef:
                 name: postgres-secret
