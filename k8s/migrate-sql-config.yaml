@@ -4,10 +4,14 @@ metadata:
   name: migrate-sql-config
 data:
   migrate.sql: |
-    -- Example migration: create users table if not exists
-    CREATE TABLE IF NOT EXISTS users (
+    -- Exemple de migration : ajout d'une colonne
+    ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+
+    -- Exemple : nouvelle table
+    CREATE TABLE orders (
       id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      user_id INT REFERENCES users(id),
+      product VARCHAR(100),
+      quantity INT,
+      created_at TIMESTAMP DEFAULT NOW()
     );
