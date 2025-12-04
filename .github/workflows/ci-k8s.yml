@@ -46,6 +46,11 @@ jobs:
 
       - name: Run tests
         run: npm test
+      - name: Run DB migrations
+        run: |
+          kubectl apply -f k8s/migrate-sql-config.yaml
+          kubectl apply -f k8s/db-migrate-job.yaml
+          kubectl wait --for=condition=complete job/db-migrate-job --timeout=60s
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5433
