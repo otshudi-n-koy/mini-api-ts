@@ -1,0 +1,21 @@
+<div class="app-container">
+  <header>
+    <h1>{{ title }}</h1>
+    <p>Gestion des utilisateurs avec Angular et API REST</p>
+  </header>
+
+  <main>
+    <app-user-form 
+      [userToEdit]="selectedUser" 
+      (userAdded)="onUserAdded()" 
+      (userUpdated)="onUserUpdated()">
+    </app-user-form>
+    <app-user-list #userList (userSelected)="onUserSelected($event)"></app-user-list>
+  </main>
+
+  <footer>
+    <p>API Version: v1 | Mini API TS © 2025</p>
+  </footer>
+</div>
+
+<router-outlet />

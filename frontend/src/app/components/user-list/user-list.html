@@ -1,0 +1,43 @@
+<div class="container">
+  <h2>Liste des Utilisateurs</h2>
+
+  <div *ngIf="loading" class="loading">
+    Chargement...
+  </div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && users.length === 0" class="empty">
+    Aucun utilisateur trouvé.
+  </div>
+
+  <table *ngIf="!loading && users.length > 0" class="user-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Créé le</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users">
+        <td>{{ user.id }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.created_at | date:'short' }}</td>
+        <td class="actions">
+          <button (click)="editUser(user)" class="btn-edit">
+            Modifier
+          </button>
+          <button (click)="deleteUser(user.id!)" class="btn-delete">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

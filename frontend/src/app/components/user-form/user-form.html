@@ -1,0 +1,58 @@
+<div class="form-container">
+  <h3>{{ isEditMode ? 'Modifier un Utilisateur' : 'Ajouter un Utilisateur' }}</h3>
+
+  <div *ngIf="error" class="alert error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="success" class="alert success">
+    {{ success }}
+  </div>
+
+  <form (ngSubmit)="onSubmit()" #userForm="ngForm">
+    <div class="form-group">
+      <label for="name">Nom:</label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        [(ngModel)]="user.name"
+        required
+        placeholder="Entrez le nom"
+        [disabled]="submitting"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        [(ngModel)]="user.email"
+        required
+        placeholder="Entrez l'email"
+        [disabled]="submitting"
+      />
+    </div>
+
+    <div class="form-actions">
+      <button
+        type="submit"
+        class="btn-submit"
+        [disabled]="!userForm.form.valid || submitting"
+      >
+        {{ submitting ? (isEditMode ? 'Modification en cours...' : 'Ajout en cours...') : (isEditMode ? 'Modifier' : 'Ajouter') }}
+      </button>
+      <button
+        *ngIf="isEditMode"
+        type="button"
+        class="btn-cancel"
+        (click)="cancelEdit()"
+        [disabled]="submitting"
+      >
+        Annuler
+      </button>
+    </div>
+  </form>
+</div>

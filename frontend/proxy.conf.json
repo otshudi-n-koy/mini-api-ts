@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://mini-api.local",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
