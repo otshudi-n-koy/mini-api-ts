@@ -41,7 +41,7 @@ app.get("/ready", async (_req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`API running on http://localhost:${port}`);
-  console.log(`Swagger docs on http://localhost:${port}/docs`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`API running on http://0.0.0.0:${port}`);
+  console.log(`Swagger docs on http://0.0.0.0:${port}/docs`);
 });
