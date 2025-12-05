@@ -28,8 +28,14 @@ spec:
                 sleep 2;
               done;
               echo "Postgres is ready. Running reset script...";
+              export PGPASSWORD="$POSTGRES_PASSWORD"
               psql -v ON_ERROR_STOP=1 -h postgres-service -p 5432 -U "$POSTGRES_USER" -d postgres -f /scripts/reset.sql
-              echo "Reset completed successfully"
+              if [ $? -eq 0 ]; then
+                echo "Reset completed successfully"
+              else
+                echo "ERROR: Reset failed with exit code $?"
+                exit 1
+              fi
           envFrom:
             - secretRef:
                 name: postgres-secret
