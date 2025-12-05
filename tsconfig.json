@@ -26,6 +26,7 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    "resolveJsonModule": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -47,5 +48,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "scripts", "test-db.ts"]
 }
