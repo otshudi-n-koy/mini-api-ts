@@ -132,6 +132,53 @@ jobs:
             exit 1
           fi
           
+          echo "Testing GET /users/1 endpoint via Ingress..."
+          USER_RESPONSE=$(curl -H "Host: mini-api.local" http://$MINIKUBE_IP/users/1 -f)
+          echo "User 1 response: $USER_RESPONSE"
+          if echo "$USER_RESPONSE" | grep -q "Alice"; then
+            echo "✅ GET /users/1 working"
+          else
+            echo "❌ GET /users/1 failed"
+            exit 1
+          fi
+          
+          echo "Testing POST /users/add endpoint via Ingress..."
+          ADD_RESPONSE=$(curl -H "Host: mini-api.local" -X POST http://$MINIKUBE_IP/users/add \
+            -H "Content-Type: application/json" \
+            -d '{"name":"TestUser","email":"test@example.com"}' -f)
+          echo "Add user response: $ADD_RESPONSE"
+          if echo "$ADD_RESPONSE" | grep -q "TestUser"; then
+            echo "✅ POST /users/add working"
+            # Extract the ID for further tests
+            TEST_USER_ID=$(echo "$ADD_RESPONSE" | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
+            echo "Created user with ID: $TEST_USER_ID"
+          else
+            echo "❌ POST /users/add failed"
+            exit 1
+          fi
+          
+          echo "Testing PUT /users/$TEST_USER_ID endpoint via Ingress..."
+          UPDATE_RESPONSE=$(curl -H "Host: mini-api.local" -X PUT http://$MINIKUBE_IP/users/$TEST_USER_ID \
+            -H "Content-Type: application/json" \
+            -d '{"name":"TestUser Updated","email":"test.updated@example.com"}' -f)
+          echo "Update user response: $UPDATE_RESPONSE"
+          if echo "$UPDATE_RESPONSE" | grep -q "TestUser Updated"; then
+            echo "✅ PUT /users/$TEST_USER_ID working"
+          else
+            echo "❌ PUT /users/$TEST_USER_ID failed"
+            exit 1
+          fi
+          
+          echo "Testing DELETE /users/$TEST_USER_ID endpoint via Ingress..."
+          DELETE_RESPONSE=$(curl -H "Host: mini-api.local" -X DELETE http://$MINIKUBE_IP/users/$TEST_USER_ID -f)
+          echo "Delete user response: $DELETE_RESPONSE"
+          if echo "$DELETE_RESPONSE" | grep -q "Utilisateur supprimé"; then
+            echo "✅ DELETE /users/$TEST_USER_ID working"
+          else
+            echo "❌ DELETE /users/$TEST_USER_ID failed"
+            exit 1
+          fi
+          
           echo "Testing /docs endpoint via Ingress..."
           DOCS_RESPONSE=$(curl -H "Host: mini-api.local" http://$MINIKUBE_IP/docs/ -f)
           if echo "$DOCS_RESPONSE" | grep -qi "swagger"; then
