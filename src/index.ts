@@ -9,13 +9,14 @@ app.use(express.json());
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.use("/users", usersRouter);
+// API v1 routes
+app.use("/api/v1/users", usersRouter);
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/api/v1/health", (req, res) => {
+  res.json({ status: "ok", version: "1.0.0" });
 });
 
-app.get("/ready", async (_req, res) => {
+app.get("/api/v1/ready", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
     res.status(200).send({ status: "ready" });
