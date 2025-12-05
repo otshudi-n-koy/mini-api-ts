@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   ci-cd:
@@ -108,22 +109,22 @@ jobs:
           MINIKUBE_IP=$(minikube ip)
           echo "Minikube IP: $MINIKUBE_IP"
           
-          echo "Testing /health endpoint via Ingress (HTTPS)..."
-          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/health -f || {
+          echo "Testing /api/v1/health endpoint via Ingress (HTTPS)..."
+          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/health -f || {
             echo "Health check failed"
             kubectl get ingress
             kubectl describe ingress api-ingress
             exit 1
           }
           
-          echo "Testing /ready endpoint via Ingress (HTTPS)..."
-          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/ready -f || {
+          echo "Testing /api/v1/ready endpoint via Ingress (HTTPS)..."
+          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/ready -f || {
             echo "Ready check failed"
             exit 1
           }
           
-          echo "Testing /users endpoint via Ingress (HTTPS)..."
-          USERS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/users -f)
+          echo "Testing /api/v1/users endpoint via Ingress (HTTPS)..."
+          USERS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/users -f)
           echo "Users response: $USERS_RESPONSE"
           if echo "$USERS_RESPONSE" | grep -q "Alice"; then
             echo "✅ Users endpoint working - Alice found in response"
@@ -132,8 +133,8 @@ jobs:
             exit 1
           fi
           
-          echo "Testing GET /users/1 endpoint via Ingress (HTTPS)..."
-          USER_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/users/1 -f)
+          echo "Testing GET /api/v1/users/1 endpoint via Ingress (HTTPS)..."
+          USER_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/users/1 -f)
           echo "User 1 response: $USER_RESPONSE"
           if echo "$USER_RESPONSE" | grep -q "Alice"; then
             echo "✅ GET /users/1 working"
@@ -142,8 +143,8 @@ jobs:
             exit 1
           fi
           
-          echo "Testing POST /users/add endpoint via Ingress (HTTPS)..."
-          ADD_RESPONSE=$(curl -k -H "Host: mini-api.local" -X POST https://$MINIKUBE_IP/users/add \
+          echo "Testing POST /api/v1/users/add endpoint via Ingress (HTTPS)..."
+          ADD_RESPONSE=$(curl -k -H "Host: mini-api.local" -X POST https://$MINIKUBE_IP/api/v1/users/add \
             -H "Content-Type: application/json" \
             -d '{"name":"TestUser","email":"test@example.com"}' -f)
           echo "Add user response: $ADD_RESPONSE"
@@ -157,8 +158,8 @@ jobs:
             exit 1
           fi
           
-          echo "Testing PUT /users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
-          UPDATE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X PUT https://$MINIKUBE_IP/users/$TEST_USER_ID \
+          echo "Testing PUT /api/v1/users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
+          UPDATE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X PUT https://$MINIKUBE_IP/api/v1/users/$TEST_USER_ID \
             -H "Content-Type: application/json" \
             -d '{"name":"TestUser Updated","email":"test.updated@example.com"}' -f)
           echo "Update user response: $UPDATE_RESPONSE"
@@ -169,8 +170,8 @@ jobs:
             exit 1
           fi
           
-          echo "Testing DELETE /users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
-          DELETE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X DELETE https://$MINIKUBE_IP/users/$TEST_USER_ID -f)
+          echo "Testing DELETE /api/v1/users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
+          DELETE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X DELETE https://$MINIKUBE_IP/api/v1/users/$TEST_USER_ID -f)
           echo "Delete user response: $DELETE_RESPONSE"
           if echo "$DELETE_RESPONSE" | grep -q "Utilisateur supprimé"; then
             echo "✅ DELETE /users/$TEST_USER_ID working"
