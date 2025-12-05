@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "http://mini-api.local",
-      "description": "Minikube Ingress"
+      "url": "http://mini-api.local/api/v1",
+      "description": "Minikube Ingress - API v1"
     }
   ],
   "tags": [
@@ -38,6 +38,10 @@
                     "status": {
                       "type": "string",
                       "example": "ok"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
                     }
                   }
                 }
