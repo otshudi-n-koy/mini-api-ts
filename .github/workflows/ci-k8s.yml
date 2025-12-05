@@ -122,4 +122,23 @@ jobs:
             exit 1
           }
           
-          echo "API is accessible via Ingress!"
+          echo "Testing /users endpoint via Ingress..."
+          USERS_RESPONSE=$(curl -H "Host: mini-api.local" http://$MINIKUBE_IP/users -f)
+          echo "Users response: $USERS_RESPONSE"
+          if echo "$USERS_RESPONSE" | grep -q "Alice"; then
+            echo "✅ Users endpoint working - Alice found in response"
+          else
+            echo "❌ Users endpoint failed - Alice not found"
+            exit 1
+          fi
+          
+          echo "Testing /docs endpoint via Ingress..."
+          DOCS_RESPONSE=$(curl -H "Host: mini-api.local" http://$MINIKUBE_IP/docs -f)
+          if echo "$DOCS_RESPONSE" | grep -q "swagger"; then
+            echo "✅ Swagger docs accessible"
+          else
+            echo "❌ Swagger docs not accessible"
+            exit 1
+          fi
+          
+          echo "✅ All API endpoints are accessible via Ingress!"
