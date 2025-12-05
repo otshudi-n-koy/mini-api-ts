@@ -105,45 +105,137 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "example": 1
-                      },
-                      "name": {
-                        "type": "string",
-                        "example": "Alice"
-                      },
-                      "email": {
-                        "type": "string",
-                        "example": "alice@example.com"
-                      },
-                      "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2025-12-05T20:31:21.087Z"
-                      }
-                    }
+                    "$ref": "#/components/schemas/User"
                   }
                 }
               }
             }
           },
           "500": {
-            "description": "Erreur serveur",
+            "description": "Erreur serveur"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Récupérer un utilisateur par ID",
+        "description": "Récupère les détails d'un utilisateur spécifique",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de l'utilisateur"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Utilisateur trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur non trouvé"
+          },
+          "500": {
+            "description": "Erreur serveur"
+          }
+        }
+      },
+      "put": {
+        "summary": "Mettre à jour un utilisateur",
+        "description": "Met à jour les informations d'un utilisateur existant",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de l'utilisateur"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Utilisateur mis à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Utilisateur non trouvé"
+          },
+          "500": {
+            "description": "Erreur serveur"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Supprimer un utilisateur",
+        "description": "Supprime un utilisateur de la base de données",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de l'utilisateur à supprimer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Utilisateur supprimé",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": {
-                      "type": "string"
+                    "message": {
+                      "type": "string",
+                      "example": "Utilisateur supprimé"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
                     }
                   }
                 }
               }
             }
+          },
+          "404": {
+            "description": "Utilisateur non trouvé"
+          },
+          "500": {
+            "description": "Erreur serveur"
           }
         }
       }
@@ -158,18 +250,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["name", "email"],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "example": "David"
-                  },
-                  "email": {
-                    "type": "string",
-                    "example": "david@example.com"
-                  }
-                }
+                "$ref": "#/components/schemas/UserInput"
               }
             }
           }
@@ -180,40 +261,53 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "integer"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string"
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "$ref": "#/components/schemas/User"
                 }
               }
             }
           },
           "500": {
-            "description": "Erreur serveur",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Erreur serveur"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "email": {
+            "type": "string",
+            "example": "alice@example.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-05T20:31:21.087Z"
+          }
+        }
+      },
+      "UserInput": {
+        "type": "object",
+        "required": ["name", "email"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "David"
+          },
+          "email": {
+            "type": "string",
+            "example": "david@example.com"
           }
         }
       }
