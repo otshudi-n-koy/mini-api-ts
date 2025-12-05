@@ -134,10 +134,11 @@ jobs:
           
           echo "Testing /docs endpoint via Ingress..."
           DOCS_RESPONSE=$(curl -H "Host: mini-api.local" http://$MINIKUBE_IP/docs -f)
-          if echo "$DOCS_RESPONSE" | grep -q "swagger"; then
+          if echo "$DOCS_RESPONSE" | grep -qi "swagger"; then
             echo "✅ Swagger docs accessible"
           else
             echo "❌ Swagger docs not accessible"
+            echo "Response preview: ${DOCS_RESPONSE:0:200}"
             exit 1
           fi
           
