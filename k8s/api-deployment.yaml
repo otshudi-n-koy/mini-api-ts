@@ -17,6 +17,7 @@ spec:
       containers:
         - name: mini-api
           image: mini-api-ts:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 3000
           readinessProbe:
