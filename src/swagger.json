@@ -1,0 +1,222 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mini API TS",
+    "version": "1.0.0",
+    "description": "API de démonstration avec TypeScript et Swagger"
+  },
+  "servers": [
+    {
+      "url": "http://mini-api.local",
+      "description": "Minikube Ingress"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Gestion des utilisateurs"
+    },
+    {
+      "name": "Health",
+      "description": "Health checks et monitoring"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns the health status of the API",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "summary": "Readiness check endpoint",
+        "description": "Checks if the API is ready to serve requests (includes DB connectivity check)",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "API is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ready"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "API is not ready (DB unavailable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "unavailable"
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Connection error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Liste tous les utilisateurs",
+        "description": "Récupère la liste complète des utilisateurs depuis la base de données",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "Alice"
+                      },
+                      "email": {
+                        "type": "string",
+                        "example": "alice@example.com"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-12-05T20:31:21.087Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/add": {
+      "post": {
+        "summary": "Ajouter un utilisateur",
+        "description": "Crée un nouvel utilisateur dans la base de données",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "David"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "david@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Utilisateur créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erreur serveur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
