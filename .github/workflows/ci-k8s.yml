@@ -71,8 +71,9 @@ jobs:
 
       - name: Build Docker image
         run: |
+          eval $(minikube docker-env)
           docker build -t mini-api-ts:latest .
-          minikube image load mini-api-ts:latest
+          docker images | grep mini-api-ts
 
       - name: Deploy API to Kubernetes
         run: |
