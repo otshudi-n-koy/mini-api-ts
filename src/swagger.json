@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://mini-api.local/api/v1",
+      "url": "https://mini-api.local/api/v1",
       "description": "Minikube Ingress - API v1"
     }
   ],
