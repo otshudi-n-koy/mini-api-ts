@@ -96,7 +96,14 @@ jobs:
           kubectl wait --namespace ingress-nginx \
             --for=condition=ready pod \
             --selector=app.kubernetes.io/component=controller \
-            --timeout=120s
+            --timeout=180s || {
+            echo "Ingress controller not ready, checking status..."
+            kubectl get pods -n ingress-nginx
+            kubectl describe pods -n ingress-nginx
+          }
+          echo "Waiting for ingress to be configured..."
+          sleep 10
+          kubectl get ingress api-ingress
 
       - name: Test API via Ingress
         run: |
