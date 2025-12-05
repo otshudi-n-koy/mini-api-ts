@@ -91,16 +91,13 @@ jobs:
       - name: Setup Ingress
         run: |
           minikube addons enable ingress
-          kubectl apply -f k8s/api-ingress.yaml
-          echo "Waiting for ingress controller to be ready..."
+          echo "Waiting for ingress controller deployment to be available..."
           kubectl wait --namespace ingress-nginx \
-            --for=condition=ready pod \
-            --selector=app.kubernetes.io/component=controller \
-            --timeout=180s || {
-            echo "Ingress controller not ready, checking status..."
-            kubectl get pods -n ingress-nginx
-            kubectl describe pods -n ingress-nginx
-          }
+            --for=condition=available deployment/ingress-nginx-controller \
+            --timeout=180s
+          echo "Waiting for ingress admission webhook to be ready..."
+          sleep 20
+          kubectl apply -f k8s/api-ingress.yaml
           echo "Waiting for ingress to be configured..."
           sleep 10
           kubectl get ingress api-ingress
