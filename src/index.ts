@@ -1,36 +1,20 @@
 import express from "express";
 import swaggerUi from "swagger-ui-express";
-import swaggerJsdoc from "swagger-jsdoc";
 import usersRouter from "./routes/users.js";
 import pool from "./db.js";
+import swaggerDocument from "./swagger.json" with { type: "json" };
 
 const app = express();
 app.use(express.json());
 
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Mini API TS",
-      version: "1.0.0",
-      description: "API de démonstration avec TypeScript et Swagger",
-    },
-    servers: [{ url: "http://localhost:3000" }],
-  },
-  apis: ["./src/routes/*.ts"],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/users", usersRouter);
 
-// Health check endpoint for Kubernetes probes
-app.get("/health", (_req, res) => {
-  res.status(200).send({ status: "ok" });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
-// Readiness endpoint that checks DB connectivity
 app.get("/ready", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -40,8 +24,7 @@ app.get("/ready", async (_req, res) => {
   }
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, "0.0.0.0", () => {
-  console.log(`API running on http://0.0.0.0:${port}`);
-  console.log(`Swagger docs on http://0.0.0.0:${port}/docs`);
+app.listen(3000, "0.0.0.0", () => {
+  console.log("API running on http://0.0.0.0:3000");
+  console.log("Swagger docs on http://0.0.0.0:3000/docs");
 });
