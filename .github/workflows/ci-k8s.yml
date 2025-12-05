@@ -86,3 +86,35 @@ jobs:
             kubectl logs -l app=mini-api --tail=100
             exit 1
           }
+
+      - name: Setup Ingress
+        run: |
+          minikube addons enable ingress
+          kubectl apply -f k8s/api-ingress.yaml
+          echo "Waiting for ingress controller to be ready..."
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=120s
+
+      - name: Test API via Ingress
+        run: |
+          echo "Getting Minikube IP..."
+          MINIKUBE_IP=$(minikube ip)
+          echo "Minikube IP: $MINIKUBE_IP"
+          
+          echo "Testing /health endpoint via Ingress..."
+          curl -H "Host: mini-api.local" http://$MINIKUBE_IP/health -f || {
+            echo "Health check failed"
+            kubectl get ingress
+            kubectl describe ingress api-ingress
+            exit 1
+          }
+          
+          echo "Testing /ready endpoint via Ingress..."
+          curl -H "Host: mini-api.local" http://$MINIKUBE_IP/ready -f || {
+            echo "Ready check failed"
+            exit 1
+          }
+          
+          echo "API is accessible via Ingress!"
