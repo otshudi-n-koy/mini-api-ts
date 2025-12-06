@@ -229,6 +229,14 @@ jobs:
           pattern: allure-results-*
           path: allure-results-temp/
 
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
       - name: Merge Allure results
         run: |
           mkdir -p allure-results
@@ -239,11 +247,25 @@ jobs:
           echo "✅ Found $(ls -1 allure-results | wc -l) result files"
           ls -la allure-results/
 
+      - name: Copy Allure history
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "📜 Copying Allure history from previous reports..."
+          mkdir -p allure-results/history
+          if [ -d "gh-pages/allure-report/history" ]; then
+            cp -r gh-pages/allure-report/history/* allure-results/history/
+            echo "✅ History copied successfully"
+            ls -la allure-results/history/
+          else
+            echo "ℹ️ No previous history found (first run or history cleared)"
+          fi
+
       - name: Generate Allure report
         run: |
           npm install -g allure-commandline
           allure generate allure-results --clean -o allure-report
-          echo "✅ Allure report generated"
+          echo "✅ Allure report generated with history"
 
       - name: Upload Allure report
         uses: actions/upload-artifact@v4
