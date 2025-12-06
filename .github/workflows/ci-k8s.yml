@@ -115,6 +115,15 @@ jobs:
             --for=condition=available deployment/ingress-nginx-controller \
             --timeout=180s
           
+          echo "Waiting for admission webhook to be ready..."
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=120s
+          
+          echo "Sleeping to ensure webhook is fully operational..."
+          sleep 30
+          
           echo "Applying frontend ingress..."
           kubectl apply -f k8s/frontend-ingress.yaml
           
