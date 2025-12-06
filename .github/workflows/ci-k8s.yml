@@ -145,7 +145,7 @@ jobs:
           curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/health -f || {
             echo "Health check failed"
             kubectl get ingress
-            kubectl describe ingress api-ingress
+            kubectl describe ingress frontend-ingress
             exit 1
           }
           
