@@ -1,0 +1,287 @@
+name: Test Results Summary
+
+on:
+  workflow_run:
+    workflows: ["Parallel E2E Tests"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  generate-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test-artifacts
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate test summary
+        id: summary
+        run: |
+          # Créer le script de parsing des résultats
+          cat > parse-results.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const testSuites = [
+            { name: 'User Management', artifact: 'test-results-user-management' },
+            { name: 'API Integration', artifact: 'test-results-api-integration' },
+            { name: 'Form Validation', artifact: 'test-results-form-validation' },
+            { name: 'UI/UX', artifact: 'test-results-ui-ux' },
+            { name: 'Performance', artifact: 'test-results-performance' },
+            { name: 'Accessibility', artifact: 'test-results-accessibility' }
+          ];
+
+          let totalTests = 0;
+          let totalPassed = 0;
+          let totalFailed = 0;
+          let totalSkipped = 0;
+          let results = [];
+
+          console.log('📊 Parsing test results...\n');
+
+          for (const suite of testSuites) {
+            const artifactPath = path.join('test-artifacts', suite.artifact);
+            
+            if (!fs.existsSync(artifactPath)) {
+              console.log(`⚠️  No results found for ${suite.name}`);
+              results.push({
+                suite: suite.name,
+                status: '⚠️ Not Run',
+                passed: 0,
+                failed: 0,
+                skipped: 0,
+                total: 0,
+                tests: []
+              });
+              continue;
+            }
+
+            // Chercher le fichier results.json dans test-results
+            const resultsPath = path.join(artifactPath, 'test-results');
+            let suiteResults = {
+              suite: suite.name,
+              status: '✅ Passed',
+              passed: 0,
+              failed: 0,
+              skipped: 0,
+              total: 0,
+              tests: []
+            };
+
+            try {
+              // Lire tous les fichiers JSON dans test-results
+              if (fs.existsSync(resultsPath)) {
+                const files = fs.readdirSync(resultsPath);
+                const jsonFiles = files.filter(f => f.endsWith('.json') || f === 'results.json');
+                
+                for (const file of jsonFiles) {
+                  const content = fs.readFileSync(path.join(resultsPath, file), 'utf8');
+                  const data = JSON.parse(content);
+                  
+                  if (data.suites) {
+                    for (const testSuite of data.suites) {
+                      for (const spec of testSuite.specs || []) {
+                        const testName = spec.title;
+                        const testStatus = spec.ok ? 'passed' : spec.tests?.[0]?.results?.[0]?.status || 'unknown';
+                        
+                        suiteResults.tests.push({
+                          name: testName,
+                          status: testStatus
+                        });
+                        
+                        suiteResults.total++;
+                        if (testStatus === 'passed') {
+                          suiteResults.passed++;
+                        } else if (testStatus === 'failed') {
+                          suiteResults.failed++;
+                          suiteResults.status = '❌ Failed';
+                        } else if (testStatus === 'skipped') {
+                          suiteResults.skipped++;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              if (suiteResults.total === 0) {
+                // Essayer de lire depuis playwright-report
+                const reportPath = path.join(artifactPath, 'playwright-report');
+                if (fs.existsSync(reportPath)) {
+                  console.log(`  Reading from playwright-report for ${suite.name}`);
+                  suiteResults.status = '⚠️ Unknown';
+                }
+              }
+
+            } catch (error) {
+              console.error(`Error parsing ${suite.name}:`, error.message);
+              suiteResults.status = '❌ Error';
+            }
+
+            results.push(suiteResults);
+            totalTests += suiteResults.total;
+            totalPassed += suiteResults.passed;
+            totalFailed += suiteResults.failed;
+            totalSkipped += suiteResults.skipped;
+
+            console.log(`${suite.name}: ${suiteResults.passed}/${suiteResults.total} passed`);
+          }
+
+          // Générer le rapport Markdown
+          let markdown = '# 🧪 E2E Test Results Summary\n\n';
+          markdown += `**Workflow Run:** [\`${process.env.RUN_ID}\`](${process.env.RUN_URL})\n\n`;
+          markdown += `**Date:** ${new Date().toISOString()}\n\n`;
+          
+          markdown += '## 📈 Overall Statistics\n\n';
+          markdown += `| Metric | Count |\n`;
+          markdown += `|--------|-------|\n`;
+          markdown += `| **Total Tests** | ${totalTests} |\n`;
+          markdown += `| ✅ **Passed** | ${totalPassed} |\n`;
+          markdown += `| ❌ **Failed** | ${totalFailed} |\n`;
+          markdown += `| ⏭️ **Skipped** | ${totalSkipped} |\n`;
+          markdown += `| 📊 **Success Rate** | ${totalTests > 0 ? ((totalPassed / totalTests) * 100).toFixed(1) : 0}% |\n\n`;
+
+          markdown += '## 📋 Test Suites\n\n';
+          markdown += `| Suite | Status | Passed | Failed | Skipped | Total | Details |\n`;
+          markdown += `|-------|--------|--------|--------|---------|-------|----------|\n`;
+
+          for (const result of results) {
+            const detailsLink = `[View Logs](${process.env.RUN_URL})`;
+            markdown += `| **${result.suite}** | ${result.status} | ${result.passed} | ${result.failed} | ${result.skipped} | ${result.total} | ${detailsLink} |\n`;
+          }
+
+          markdown += '\n## 🔍 Detailed Test Results\n\n';
+
+          for (const result of results) {
+            markdown += `### ${result.suite}\n\n`;
+            
+            if (result.tests.length === 0) {
+              markdown += `_No test results available_\n\n`;
+              continue;
+            }
+
+            markdown += `| Test | Status |\n`;
+            markdown += `|------|--------|\n`;
+
+            for (const test of result.tests) {
+              const statusIcon = test.status === 'passed' ? '✅' :
+                                test.status === 'failed' ? '❌' :
+                                test.status === 'skipped' ? '⏭️' : '❓';
+              markdown += `| ${test.name} | ${statusIcon} ${test.status} |\n`;
+            }
+
+            markdown += '\n';
+          }
+
+          markdown += '\n---\n';
+          markdown += `\n🔗 [View Full Workflow Run](${process.env.RUN_URL})\n`;
+
+          // Sauvegarder le rapport
+          fs.writeFileSync('test-summary.md', markdown);
+          console.log('\n✅ Summary generated successfully');
+
+          // Générer le statut global
+          const overallStatus = totalFailed === 0 ? 'success' : 'failure';
+          fs.writeFileSync('test-status.txt', overallStatus);
+          
+          console.log(`\nOverall Status: ${overallStatus}`);
+          console.log(`Total: ${totalTests}, Passed: ${totalPassed}, Failed: ${totalFailed}`);
+          EOF
+
+          # Exécuter le script
+          export RUN_ID="${{ github.event.workflow_run.id }}"
+          export RUN_URL="${{ github.event.workflow_run.html_url }}"
+          node parse-results.js
+
+      - name: Read summary
+        id: read_summary
+        run: |
+          {
+            echo 'summary<<EOF'
+            cat test-summary.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Read status
+        id: read_status
+        run: |
+          STATUS=$(cat test-status.txt)
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: Create summary comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const summary = `${{ steps.read_summary.outputs.summary }}`;
+            
+            // Ajouter au GitHub Actions Summary
+            await core.summary
+              .addRaw(summary)
+              .write();
+
+            console.log('✅ Summary added to workflow run');
+
+      - name: Upload summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary-report
+          path: |
+            test-summary.md
+            test-status.txt
+          retention-days: 30
+
+      - name: Comment on PR (if applicable)
+        if: github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const summary = `${{ steps.read_summary.outputs.summary }}`;
+            const status = '${{ steps.read_status.outputs.status }}';
+            
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: '${{ github.event.workflow_run.head_sha }}'
+            });
+
+            if (prs.data.length > 0) {
+              const pr = prs.data[0];
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: summary
+              });
+              
+              console.log(`✅ Posted summary to PR #${pr.number}`);
+            }
+
+      - name: Set workflow status
+        run: |
+          STATUS=$(cat test-status.txt)
+          if [ "$STATUS" = "failure" ]; then
+            echo "❌ Some tests failed"
+            exit 1
+          else
+            echo "✅ All tests passed"
+          fi
