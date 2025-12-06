@@ -51,29 +51,52 @@ This project uses [Playwright](https://playwright.dev/) for end-to-end testing w
 ### Run tests
 
 ```bash
-npm test                # Run all E2E tests
-npm run test:ui         # Run with Playwright UI
-npm run test:headed     # Run in headed mode (visible browser)
+npm test                              # Run all E2E tests (with Allure)
+npm run test:ui                       # Run with Playwright UI
+npm run test:headed                   # Run in headed mode (visible browser)
+npx playwright test --reporter=list   # Run with simple list reporter
 ```
 
 ### View test reports
 
-**HTML Report (Playwright):**
+**Playwright HTML Report:**
 ```bash
-npm run test:report
+npm run test:report    # Open Playwright's built-in HTML report
 ```
 
-**Allure Report (detailed analytics):**
-```bash
-# Generate and open report (Windows)
-.\allure-report.ps1
+**Allure Report (recommended - detailed dashboard):**
 
-# Or manually
-npm run allure:generate    # Generate HTML report
+**Option 1: Using npm scripts (recommended)**
+```bash
+npm run allure:generate    # Generate Allure HTML report
 npm run allure:open        # Open in browser
 ```
 
-**Note:** Allure requires Java. If you get a JAVA_HOME error, use the PowerShell script `allure-report.ps1` which sets it automatically.
+**Option 2: Using PowerShell helper (Windows)**
+```powershell
+.\allure-report.ps1        # Auto-fixes JAVA_HOME and opens report
+```
+
+**Option 3: Manual commands**
+```bash
+# Run tests with Allure reporter explicitly
+npx playwright test --reporter=allure-playwright
+
+# Generate and open report
+npx allure generate ./allure-results --clean -o ./allure-report
+npx allure open ./allure-report
+```
+
+**Requirements:**
+- **Java** is required for Allure (JDK 8 or higher)
+- If you get a `JAVA_HOME` error on Windows, use `.\allure-report.ps1` which sets it automatically
+
+**What you get with Allure:**
+- 📊 Interactive dashboard with test statistics
+- 📸 Screenshots and video recordings
+- 🔍 Detailed test execution traces
+- 📈 Trends and history (when run multiple times)
+- 🏷️ Test categorization and filtering
 
 ## Additional Resources
 
