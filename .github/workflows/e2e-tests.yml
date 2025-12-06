@@ -1,0 +1,156 @@
+name: E2E Tests
+
+on:
+  # Déclenchement manuel
+  workflow_dispatch:
+  
+  # Déclenchement automatique après le déploiement réussi
+  workflow_run:
+    workflows: ["Full CI/CD Pipeline"]
+    types:
+      - completed
+    branches: [main]
+  
+  # Déclenchement planifié (tous les jours à 6h UTC)
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  e2e-tests:
+    # Ne s'exécute que si le workflow CI/CD a réussi (ou si déclenché manuellement/planifié)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: e2e-test-cluster
+          version: v0.20.0
+          wait: 120s
+
+      - name: Deploy PostgreSQL
+        run: |
+          kubectl apply -f k8s/postgres-config.yaml
+          kubectl apply -f k8s/postgres-secret.yaml
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/postgres-service.yaml
+          kubectl rollout status deployment/postgres-deployment --timeout=120s
+
+      - name: Initialize Database
+        run: |
+          kubectl apply -f k8s/reset-sql-config.yaml
+          kubectl apply -f k8s/db-reset-job.yaml
+          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s
+          
+          kubectl apply -f k8s/migrate-sql-config.yaml
+          kubectl apply -f k8s/db-migrate-job.yaml
+          kubectl wait --for=condition=complete job/db-migrate-job --timeout=120s
+
+      - name: Build and Load Docker Images
+        run: |
+          docker build -t mini-api-ts:latest .
+          docker build -t mini-api-frontend:latest ./frontend
+          
+          kind load docker-image mini-api-ts:latest --name e2e-test-cluster
+          kind load docker-image mini-api-frontend:latest --name e2e-test-cluster
+
+      - name: Deploy Application
+        run: |
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl apply -f k8s/api-service.yaml
+          kubectl rollout status deployment/api-deployment --timeout=180s
+          
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+          kubectl rollout status deployment/frontend-deployment --timeout=120s
+
+      - name: Setup Ingress
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+          
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=available deployment/ingress-nginx-controller \
+            --timeout=180s
+          
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=120s
+          
+          sleep 30
+          
+          kubectl apply -f k8s/frontend-ingress.yaml
+          sleep 10
+
+      - name: Configure DNS for Tests
+        run: |
+          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+          echo "$NODE_IP mini-api.local" | sudo tee -a /etc/hosts
+          cat /etc/hosts | grep mini-api.local
+
+      - name: Verify Application Health
+        run: |
+          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+          INGRESS_PORT=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+          
+          echo "Testing API health..."
+          curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/health -f
+          
+          echo "Testing API users endpoint..."
+          curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/users -f
+
+      - name: Run All Playwright E2E Tests
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm test
+        env:
+          CI: true
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+      - name: Generate Test Summary
+        if: always()
+        run: |
+          echo "# 🧪 E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f frontend/playwright-report/index.html ]; then
+            echo "✅ Tests completed. Report available in artifacts." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Tests failed or report not generated." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Browser**: Chromium" >> $GITHUB_STEP_SUMMARY
+          echo "- **Base URL**: https://mini-api.local" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cluster**: Kind (e2e-test-cluster)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup on Failure
+        if: failure()
+        run: |
+          echo "📋 Collecting debug information..."
+          kubectl get all -A
+          kubectl get ingress -A
+          kubectl describe ingress frontend-ingress || true
+          kubectl logs -l app=mini-api --tail=50 || true
+          kubectl logs -l app=frontend --tail=50 || true
