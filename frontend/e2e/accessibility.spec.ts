@@ -86,20 +86,26 @@ test.describe('Accessibility Tests', () => {
   });
 
   test('should have accessible form validation messages', async ({ page }) => {
-    // Soumettre le formulaire vide
-    await page.click('button[type="submit"]');
+    // Vérifier que le bouton est désactivé quand le formulaire est vide
+    const submitButton = page.locator('button[type="submit"]');
+    await expect(submitButton).toBeDisabled();
     
-    await page.waitForTimeout(500);
-    
-    // Vérifier les messages d'erreur
+    // Vérifier que les champs sont requis
     const nameInput = page.locator('input[name="name"]');
     const emailInput = page.locator('input[name="email"]');
     
-    // Vérifier l'état de validation
     const nameRequired = await nameInput.evaluate(el => (el as HTMLInputElement).required);
     const emailRequired = await emailInput.evaluate(el => (el as HTMLInputElement).required);
     
     expect(nameRequired || emailRequired).toBeTruthy();
+    
+    // Remplir partiellement et vérifier que le bouton reste désactivé
+    await page.fill('input[name="name"]', 'Test');
+    await expect(submitButton).toBeDisabled();
+    
+    // Remplir complètement pour activer le bouton
+    await page.fill('input[name="email"]', 'test@example.com');
+    await expect(submitButton).toBeEnabled();
   });
 
   test('should have sufficient button sizes for touch targets', async ({ page }) => {
