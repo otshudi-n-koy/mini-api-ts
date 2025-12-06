@@ -22,10 +22,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup Minikube
-        uses: medyagh/setup-minikube@v0.0.14
+      - name: Setup Kind Cluster
+        uses: helm/kind-action@v1
         with:
-          kubernetes-version: v1.30.0
+          cluster_name: mini-api-cluster
+          version: v0.20.0
+          wait: 120s
+
+      - name: Verify cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
 
       - name: Apply Kubernetes manifests
         run: |
@@ -63,13 +70,18 @@ jobs:
 
       - name: Build Docker images
         run: |
-          eval $(minikube docker-env)
-          
+          # Build API image
           echo "Building API image..."
           docker build -t mini-api-ts:latest .
           
+          # Build Frontend image
           echo "Building Frontend image..."
           docker build -t mini-api-frontend:latest ./frontend
+          
+          # Load images into Kind cluster
+          echo "Loading images into Kind cluster..."
+          kind load docker-image mini-api-ts:latest --name mini-api-cluster
+          kind load docker-image mini-api-frontend:latest --name mini-api-cluster
           
           docker images | grep mini-api
 
@@ -94,26 +106,34 @@ jobs:
 
       - name: Setup Ingress
         run: |
-          minikube addons enable ingress
+          # Install ingress-nginx for Kind
+          echo "Installing ingress-nginx..."
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+          
           echo "Waiting for ingress controller deployment to be available..."
           kubectl wait --namespace ingress-nginx \
             --for=condition=available deployment/ingress-nginx-controller \
             --timeout=180s
-          echo "Waiting for ingress admission webhook to be ready..."
-          sleep 20
+          
+          echo "Applying frontend ingress..."
           kubectl apply -f k8s/frontend-ingress.yaml
+          
           echo "Waiting for ingress to be configured..."
           sleep 10
           kubectl get ingress frontend-ingress
 
       - name: Test API via Ingress
         run: |
-          echo "Getting Minikube IP..."
-          MINIKUBE_IP=$(minikube ip)
-          echo "Minikube IP: $MINIKUBE_IP"
+          echo "Getting Kind node IP..."
+          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+          echo "Node IP: $NODE_IP"
+          
+          # Get ingress port
+          INGRESS_PORT=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="https")].nodePort}')
+          echo "Ingress HTTPS Port: $INGRESS_PORT"
           
           echo "Testing /api/v1/health endpoint via Ingress (HTTPS)..."
-          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/health -f || {
+          curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/health -f || {
             echo "Health check failed"
             kubectl get ingress
             kubectl describe ingress api-ingress
@@ -121,13 +141,13 @@ jobs:
           }
           
           echo "Testing /api/v1/ready endpoint via Ingress (HTTPS)..."
-          curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/ready -f || {
+          curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/ready -f || {
             echo "Ready check failed"
             exit 1
           }
           
           echo "Testing /api/v1/users endpoint via Ingress (HTTPS)..."
-          USERS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/users -f)
+          USERS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/users -f)
           echo "Users response: $USERS_RESPONSE"
           if echo "$USERS_RESPONSE" | grep -q "Alice"; then
             echo "✅ Users endpoint working - Alice found in response"
@@ -137,7 +157,7 @@ jobs:
           fi
           
           echo "Testing GET /api/v1/users/1 endpoint via Ingress (HTTPS)..."
-          USER_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/api/v1/users/1 -f)
+          USER_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/api/v1/users/1 -f)
           echo "User 1 response: $USER_RESPONSE"
           if echo "$USER_RESPONSE" | grep -q "Alice"; then
             echo "✅ GET /users/1 working"
@@ -147,7 +167,7 @@ jobs:
           fi
           
           echo "Testing POST /api/v1/users/add endpoint via Ingress (HTTPS)..."
-          ADD_RESPONSE=$(curl -k -H "Host: mini-api.local" -X POST https://$MINIKUBE_IP/api/v1/users/add \
+          ADD_RESPONSE=$(curl -k -H "Host: mini-api.local" -X POST https://$NODE_IP:$INGRESS_PORT/api/v1/users/add \
             -H "Content-Type: application/json" \
             -d '{"name":"TestUser","email":"test@example.com"}' -f)
           echo "Add user response: $ADD_RESPONSE"
@@ -162,7 +182,7 @@ jobs:
           fi
           
           echo "Testing PUT /api/v1/users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
-          UPDATE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X PUT https://$MINIKUBE_IP/api/v1/users/$TEST_USER_ID \
+          UPDATE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X PUT https://$NODE_IP:$INGRESS_PORT/api/v1/users/$TEST_USER_ID \
             -H "Content-Type: application/json" \
             -d '{"name":"TestUser Updated","email":"test.updated@example.com"}' -f)
           echo "Update user response: $UPDATE_RESPONSE"
@@ -174,7 +194,7 @@ jobs:
           fi
           
           echo "Testing DELETE /api/v1/users/$TEST_USER_ID endpoint via Ingress (HTTPS)..."
-          DELETE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X DELETE https://$MINIKUBE_IP/api/v1/users/$TEST_USER_ID -f)
+          DELETE_RESPONSE=$(curl -k -H "Host: mini-api.local" -X DELETE https://$NODE_IP:$INGRESS_PORT/api/v1/users/$TEST_USER_ID -f)
           echo "Delete user response: $DELETE_RESPONSE"
           if echo "$DELETE_RESPONSE" | grep -q "Utilisateur supprimé"; then
             echo "✅ DELETE /users/$TEST_USER_ID working"
@@ -184,7 +204,7 @@ jobs:
           fi
           
           echo "Testing /docs endpoint via Ingress (HTTPS)..."
-          DOCS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$MINIKUBE_IP/docs/ -f)
+          DOCS_RESPONSE=$(curl -k -H "Host: mini-api.local" https://$NODE_IP:$INGRESS_PORT/docs/ -f)
           if echo "$DOCS_RESPONSE" | grep -qi "swagger"; then
             echo "✅ Swagger docs accessible"
           else
