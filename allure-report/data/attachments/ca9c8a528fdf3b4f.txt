@@ -1,2 +1,0 @@
-Main landmarks: 1
-Header landmarks: 1

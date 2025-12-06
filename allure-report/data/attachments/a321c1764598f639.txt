@@ -1,2 +1,0 @@
-H1: Mini API TS - Frontend
-Found 1 H2 headings

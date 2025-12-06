@@ -1,2 +1,0 @@
-Submit button disabled (without email): true
-Submit button enabled (with email): true

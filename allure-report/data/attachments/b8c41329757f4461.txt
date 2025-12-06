@@ -1,5 +1,0 @@
-Focus styles: {
-  outline: 'rgb(0, 0, 0) none 0px',
-  outlineColor: 'rgb(0, 0, 0)',
-  boxShadow: 'none'
-}
