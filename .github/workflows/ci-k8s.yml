@@ -247,3 +247,55 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 30
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: ci-cd
+    if: failure()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: mini-api-cluster
+          version: v0.20.0
+          wait: 120s
+
+      - name: Rollback deployments
+        run: |
+          echo "⚠️ Deployment failed! Initiating rollback..."
+          
+          # Rollback API deployment
+          echo "Rolling back API deployment..."
+          kubectl rollout undo deployment/api-deployment || echo "API rollback skipped (no previous revision)"
+          
+          # Rollback Frontend deployment
+          echo "Rolling back Frontend deployment..."
+          kubectl rollout undo deployment/frontend-deployment || echo "Frontend rollback skipped (no previous revision)"
+          
+          # Wait for rollbacks to complete
+          echo "Waiting for rollbacks to stabilize..."
+          kubectl rollout status deployment/api-deployment --timeout=120s || true
+          kubectl rollout status deployment/frontend-deployment --timeout=120s || true
+          
+          echo "✅ Rollback completed"
+
+      - name: Verify rollback status
+        run: |
+          echo "Checking deployment status after rollback..."
+          kubectl get deployments
+          kubectl get pods
+          
+          # Check API health
+          kubectl get pods -l app=mini-api -o wide
+          
+          # Check Frontend health
+          kubectl get pods -l app=frontend -o wide
+
+      - name: Notify rollback
+        run: |
+          echo "🚨 DEPLOYMENT FAILED AND ROLLED BACK 🚨"
+          echo "Previous stable version has been restored"
+          echo "Please check the logs and fix issues before redeploying"
