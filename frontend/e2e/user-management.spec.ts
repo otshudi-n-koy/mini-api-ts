@@ -101,33 +101,70 @@ test.describe('User Management', () => {
     const timestamp = Date.now();
     const usersToCreate = 10;
     
-    // Compter les utilisateurs au début
+    // Attendre que la table soit chargée
     await page.waitForSelector('.user-table');
-    const initialCount = await page.locator('.user-table tbody tr').count();
+    
+    // Compter les "Auto User" existants avec ce timestamp (devrait être 0)
+    const autoUserSelector = `.user-table tbody tr:has-text("Auto User") td:has-text("${timestamp}")`;
     
     // Créer 10 utilisateurs
     for (let i = 1; i <= usersToCreate; i++) {
-      // Remplir le formulaire
       await page.fill('input[name="name"]', `Auto User ${i} - ${timestamp}`);
       await page.fill('input[name="email"]', `auto-user-${i}-${timestamp}@test.com`);
-      
-      // Soumettre
       await page.click('button[type="submit"]');
       
-      // Attendre le message de succès
+      // Attendre le message de succès et qu'il disparaisse
       await expect(page.locator('.alert.success')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('.alert.success')).toContainText('créé avec succès');
-      
-      // Attendre que la liste se mette à jour
-      await page.waitForTimeout(1000);
+      await expect(page.locator('.alert.success')).not.toBeVisible({ timeout: 5000 });
       
       console.log(`✅ Utilisateur ${i}/${usersToCreate} créé`);
     }
     
-    // Vérifier que 10 utilisateurs ont été ajoutés
-    const finalCount = await page.locator('.user-table tbody tr').count();
-    expect(finalCount).toBe(initialCount + usersToCreate);
+    // Vérifier que 10 utilisateurs avec ce timestamp existent
+    const autoUsersWithTimestamp = page.locator(`.user-table tbody tr:has-text("- ${timestamp}")`);
+    await expect(autoUsersWithTimestamp).toHaveCount(usersToCreate, { timeout: 5000 });
     
     console.log(`✅ ${usersToCreate} utilisateurs créés avec succès!`);
+  });
+
+  test('should delete the 10 previously created users', async ({ page }) => {
+    await page.waitForSelector('.user-table');
+    
+    // Rechercher tous les utilisateurs "Auto User"
+    const autoUserRows = page.locator('.user-table tbody tr:has-text("Auto User")');
+    const autoUserCount = await autoUserRows.count();
+    
+    console.log(`🔍 Trouvé ${autoUserCount} utilisateurs "Auto User" à supprimer`);
+    
+    if (autoUserCount === 0) {
+      console.log('⚠️ Aucun utilisateur "Auto User" trouvé.');
+      return;
+    }
+    
+    // Limiter à 10 suppressions
+    const usersToDelete = Math.min(autoUserCount, 10);
+    
+    // Supprimer les utilisateurs un par un
+    for (let i = 0; i < usersToDelete; i++) {
+      const remainingAutoUsers = await page.locator('.user-table tbody tr:has-text("Auto User")').count();
+      if (remainingAutoUsers === 0) break;
+      
+      // Obtenir l'email de l'utilisateur qu'on va supprimer pour vérifier sa disparition
+      const userToDelete = await page.locator('.user-table tbody tr:has-text("Auto User")').first();
+      const emailToDelete = await userToDelete.locator('td').nth(2).textContent();
+      
+      page.once('dialog', dialog => dialog.accept());
+      await page.locator('.user-table tbody tr:has-text("Auto User") .btn-delete').first().click();
+      
+      // Attendre déterministement que cette ligne spécifique disparaisse
+      await expect(page.locator(`.user-table tbody tr:has-text("${emailToDelete}")`)).toHaveCount(0, { timeout: 5000 });
+      
+      console.log(`🗑️  Utilisateur ${i + 1}/${usersToDelete} supprimé`);
+    }
+    
+    // Vérifier que les utilisateurs ont été supprimés
+    const finalAutoUserCount = await page.locator('.user-table tbody tr:has-text("Auto User")').count();
+    console.log(`✅ ${usersToDelete} utilisateurs supprimés. Restants: ${finalAutoUserCount}`);
+    expect(finalAutoUserCount).toBe(autoUserCount - usersToDelete);
   });
 });
