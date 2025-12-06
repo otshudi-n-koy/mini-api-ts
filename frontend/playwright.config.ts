@@ -6,7 +6,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['list'],
+    ['html'],
+    ['allure-playwright']
+  ],
   use: {
     baseURL: 'https://mini-api.local',
     trace: 'on-first-retry',
