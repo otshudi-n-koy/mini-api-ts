@@ -71,8 +71,10 @@ jobs:
             kubectl logs job/db-reset-job
             exit 1
           }
-          
-          # Build and load images
+
+      - name: Build and Load Docker Images
+        run: |
+          # Build and load API image
           echo "🏗️ Building API image..."
           docker build -t mini-api:latest .
           echo "📦 Loading API image into Kind cluster..."
@@ -93,8 +95,9 @@ jobs:
           docker exec kind-control-plane crictl images | grep mini-api || {
             echo "⚠️ Warning: Images might not be visible in Kind yet"
           }
-          
-          # Deploy API and Frontend
+
+      - name: Deploy API
+        run: |
           echo "🚀 Deploying API..."
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/api-service.yaml
@@ -108,7 +111,9 @@ jobs:
             kubectl logs -l app=mini-api --tail=50 || echo "No logs available"
             exit 1
           }
-          
+
+      - name: Deploy Frontend
+        run: |
           echo "🚀 Deploying Frontend..."
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
