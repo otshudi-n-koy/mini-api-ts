@@ -63,6 +63,9 @@ jobs:
           kubectl apply -f k8s/postgres-service.yaml
           kubectl wait --for=condition=ready pod -l app=postgres --timeout=180s
           
+          # Swagger secret
+          kubectl apply -f k8s/swagger-secret.yaml
+          
           # Initialize DB
           kubectl apply -f k8s/reset-sql-config.yaml
           kubectl apply -f k8s/db-reset-job.yaml

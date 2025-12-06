@@ -56,3 +56,13 @@ spec:
                 configMapKeyRef:
                   name: postgres-config
                   key: POSTGRES_DB
+            - name: SWAGGER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: swagger-secret
+                  key: SWAGGER_USER
+            - name: SWAGGER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: swagger-secret
+                  key: SWAGGER_PASS

@@ -7,7 +7,23 @@ import swaggerDocument from "./swagger.json" with { type: "json" };
 const app = express();
 app.use(express.json());
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Swagger Basic Auth middleware
+function swaggerAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const user = process.env.SWAGGER_USER || "admin";
+  const pass = process.env.SWAGGER_PASS || "secret";
+
+  const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
+  const [login, password] = Buffer.from(b64auth, "base64").toString().split(":");
+
+  if (login === user && password === pass) {
+    return next();
+  }
+
+  res.set("WWW-Authenticate", 'Basic realm="Swagger Docs"');
+  res.status(401).send("Authentication required.");
+}
+
+app.use("/docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // API v1 routes
 app.use("/api/v1/users", usersRouter);
