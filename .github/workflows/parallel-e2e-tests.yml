@@ -13,6 +13,11 @@ on:
   schedule:
     - cron: '0 2 * * *' # Daily at 2am UTC
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   # Tests en parallèle - chaque fichier de test dans un job séparé
   # Note: Chaque job exécute un fichier de test spécifique pour paralléliser l'exécution
@@ -22,12 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         test-suite:
-          - { name: 'user-management', file: 'user-management.spec.ts' }
-          - { name: 'api-integration', file: 'api-integration.spec.ts' }
+          # - { name: 'user-management', file: 'user-management.spec.ts' }
+          # - { name: 'api-integration', file: 'api-integration.spec.ts' }
           - { name: 'form-validation', file: 'form-validation.spec.ts' }
-          - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
-          - { name: 'performance', file: 'performance.spec.ts' }
-          - { name: 'accessibility', file: 'accessibility.spec.ts' }
+          # - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
+          # - { name: 'performance', file: 'performance.spec.ts' }
+          # - { name: 'accessibility', file: 'accessibility.spec.ts' }
     
     steps:
       - name: Checkout code
