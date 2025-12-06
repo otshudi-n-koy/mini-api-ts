@@ -96,8 +96,11 @@ jobs:
           # Verify images are available in Kind
           echo "🔍 Verifying images in Kind cluster..."
           docker exec kind-control-plane crictl images | grep mini-api || {
-            echo "⚠️ Warning: Images might not be visible in Kind yet"
+            echo "⚠️ Warning: Images might not be visible via crictl yet, checking with kubectl..."
           }
+          
+          # Wait a moment for images to be fully available
+          sleep 5
 
       - name: Deploy API
         run: |
@@ -108,11 +111,24 @@ jobs:
           echo "⏳ Waiting for API pod to be ready..."
           kubectl wait --for=condition=ready pod -l app=mini-api --timeout=300s || {
             echo "❌ API deployment failed"
+            echo "📋 Deployment status:"
             kubectl get deployments
+            echo "📋 Pod status:"
             kubectl get pods -l app=mini-api
-            kubectl describe pod -l app=mini-api | tail -50
+            echo "📋 Pod details:"
+            kubectl describe pod -l app=mini-api | tail -100
+            echo "📋 Available images in Kind:"
+            docker exec kind-control-plane crictl images | grep mini-api || echo "No mini-api images found"
+            echo "📋 Pod logs (if available):"
             kubectl logs -l app=mini-api --tail=50 || echo "No logs available"
             exit 1
+          }
+          
+          echo "✅ API pod is ready"
+          echo "🔍 Verifying API health..."
+          API_POD=$(kubectl get pod -l app=mini-api -o jsonpath='{.items[0].metadata.name}')
+          kubectl exec $API_POD -- wget -qO- http://localhost:3000/api/v1/health || {
+            echo "⚠️ API health check failed, but pod is running"
           }
 
       - name: Deploy Frontend
