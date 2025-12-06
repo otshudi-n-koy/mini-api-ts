@@ -1,0 +1,81 @@
+name: Publish Allure Report
+
+on:
+  workflow_run:
+    workflows: ["Parallel E2E Tests"]   # Triggered after your test workflow
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (required for Allure)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download all Allure results artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: allure-results-*
+          path: allure-results-temp/
+
+      - name: Merge Allure results
+        run: |
+          mkdir -p allure-results
+          echo "📦 Merging Allure results from all test suites..."
+          find allure-results-temp -type f \( -name "*.json" -o -name "*.txt" -o -name "*.png" \) -exec cp {} allure-results/ \;
+          echo "✅ Found $(ls -1 allure-results 2>/dev/null | wc -l) result files"
+          ls -la allure-results/ || echo "No results found"
+
+      - name: Generate Allure report
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+          echo "✅ Allure report generated"
+          ls -la allure-report/
+
+      - name: Upload Allure report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-published
+          path: allure-report/
+          retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.event.workflow_run.head_branch == 'main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          destination_dir: allure-report
+          keep_files: false
+          commit_message: 'docs: Update Allure test report from workflow run ${{ github.event.workflow_run.id }}'
+
+      - name: Add report link to summary
+        run: |
+          echo "## 📊 Allure Report Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Report generated from workflow run: ${{ github.event.workflow_run.id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.workflow_run.head_branch }}" == "main" ]; then
+            echo "🌐 **Live Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "📥 Download the artifact 'allure-report-published' to view locally" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test status: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
