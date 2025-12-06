@@ -34,8 +34,8 @@ jobs:
       - name: Generate test summary
         id: summary
         run: |
-          # Créer le script de parsing des résultats
-          cat > parse-results.js << 'EOF'
+          # Créer le script de parsing des résultats en CommonJS
+          cat > parse-results.cjs << 'EOF'
           const fs = require('fs');
           const path = require('path');
 
@@ -208,7 +208,7 @@ jobs:
           # Exécuter le script
           export RUN_ID="${{ github.event.workflow_run.id }}"
           export RUN_URL="${{ github.event.workflow_run.html_url }}"
-          node parse-results.js
+          node parse-results.cjs
 
       - name: Read summary
         id: read_summary
