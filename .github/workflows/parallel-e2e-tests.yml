@@ -12,10 +12,21 @@ on:
     - cron: '0 2 * * *' # Daily at 2am UTC
 
 jobs:
-  setup-infrastructure:
+  # Tests en parallèle - chaque fichier de test dans un job séparé
+  # Note: Chaque job exécute un fichier de test spécifique pour paralléliser l'exécution
+  run-all-tests:
     runs-on: ubuntu-latest
-    outputs:
-      cluster-ready: ${{ steps.ready.outputs.status }}
+    strategy:
+      fail-fast: false
+      matrix:
+        test-suite:
+          - { name: 'user-management', file: 'user-management.spec.ts' }
+          - { name: 'api-integration', file: 'api-integration.spec.ts' }
+          - { name: 'form-validation', file: 'form-validation.spec.ts' }
+          - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
+          - { name: 'performance', file: 'performance.spec.ts' }
+          - { name: 'accessibility', file: 'accessibility.spec.ts' }
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,122 +35,57 @@ jobs:
         uses: helm/kind-action@v1
         with:
           version: v0.20.0
-          cluster_name: test-cluster
+          cluster_name: test-cluster-${{ matrix.test-suite.name }}
           wait: 5m
 
       - name: Install NGINX Ingress
         run: |
           kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-          echo "⏳ Waiting for ingress-nginx pods..."
           kubectl wait --namespace ingress-nginx \
             --for=condition=ready pod \
             --selector=app.kubernetes.io/component=controller \
             --timeout=120s
 
-      - name: Deploy PostgreSQL
+      - name: Deploy Infrastructure
         run: |
+          # PostgreSQL
           kubectl apply -f k8s/postgres-secret.yaml
           kubectl apply -f k8s/postgres-config.yaml
           kubectl apply -f k8s/postgres-deployment.yaml
           kubectl apply -f k8s/postgres-service.yaml
-          
-          echo "⏳ Waiting for PostgreSQL..."
           kubectl wait --for=condition=ready pod -l app=postgres --timeout=180s
-
-      - name: Initialize Database
-        run: |
+          
+          # Initialize DB
           kubectl apply -f k8s/reset-sql-config.yaml
           kubectl apply -f k8s/db-reset-job.yaml
+          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s
           
-          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s || {
-            echo "❌ Database reset failed"
-            kubectl logs job/db-reset-job
-            exit 1
-          }
-
-      - name: Build and Load API Image
-        run: |
+          # Build and load images
           docker build -t mini-api:latest .
-          kind load docker-image mini-api:latest --name test-cluster
-
-      - name: Build and Load Frontend Image
-        run: |
+          kind load docker-image mini-api:latest --name test-cluster-${{ matrix.test-suite.name }}
+          
           cd frontend
           docker build -t mini-api-frontend:latest .
-          kind load docker-image mini-api-frontend:latest --name test-cluster
-
-      - name: Deploy API
-        run: |
+          kind load docker-image mini-api-frontend:latest --name test-cluster-${{ matrix.test-suite.name }}
+          cd ..
+          
+          # Deploy API and Frontend
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/api-service.yaml
+          kubectl wait --for=condition=ready pod -l app=mini-api --timeout=300s
           
-          echo "⏳ Waiting for API..."
-          kubectl wait --for=condition=ready pod -l app=mini-api --timeout=180s
-
-      - name: Deploy Frontend
-        run: |
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
+          kubectl wait --for=condition=ready pod -l app=mini-api-frontend --timeout=300s
           
-          echo "⏳ Waiting for Frontend..."
-          kubectl wait --for=condition=ready pod -l app=mini-api-frontend --timeout=180s
-
-      - name: Setup Ingress
-        run: |
+          # Setup Ingress
           kubectl apply -f k8s/frontend-ingress.yaml
-          
-          kubectl get pods -n ingress-nginx
-          kubectl wait --namespace ingress-nginx \
-            --for=condition=ready pod \
-            --selector=app.kubernetes.io/component=controller \
-            --timeout=120s
-          
           sleep 30
 
       - name: Configure DNS
         run: |
           NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
           echo "$NODE_IP mini-api.local" | sudo tee -a /etc/hosts
-          echo "✅ DNS configured: mini-api.local -> $NODE_IP"
-          cat /etc/hosts | grep mini-api
-
-      - name: Verify deployment
-        run: |
-          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-          INGRESS_PORT=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
-          
-          echo "Testing API health..."
-          curl -v -H "Host: mini-api.local" http://$NODE_IP:$INGRESS_PORT/api/v1/health || exit 1
-          
-          echo "Testing frontend..."
-          curl -v -H "Host: mini-api.local" http://$NODE_IP:$INGRESS_PORT/ || exit 1
-
-      - name: Mark as ready
-        id: ready
-        run: echo "status=success" >> $GITHUB_OUTPUT
-
-      - name: Save cluster state
-        if: success()
-        run: |
-          mkdir -p /tmp/cluster-state
-          kubectl get all --all-namespaces > /tmp/cluster-state/resources.txt
-          kubectl get ingress --all-namespaces > /tmp/cluster-state/ingress.txt
-
-      - name: Upload cluster state
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cluster-state
-          path: /tmp/cluster-state
-          retention-days: 1
-
-  # Tests en parallèle - chaque fichier de test dans un job séparé
-  test-user-management:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -156,225 +102,16 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run User Management Tests
+      - name: Run Tests - ${{ matrix.test-suite.name }}
         working-directory: frontend
-        run: npx playwright test user-management.spec.ts --reporter=json
+        run: npx playwright test ${{ matrix.test-suite.file }} --reporter=json
         continue-on-error: true
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-user-management
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-          retention-days: 7
-
-  test-api-integration:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run API Integration Tests
-        working-directory: frontend
-        run: npx playwright test api-integration.spec.ts --reporter=json
-        continue-on-error: true
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-api-integration
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-          retention-days: 7
-
-  test-form-validation:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run Form Validation Tests
-        working-directory: frontend
-        run: npx playwright test form-validation.spec.ts --reporter=json
-        continue-on-error: true
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-form-validation
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-          retention-days: 7
-
-  test-ui-ux:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run UI/UX Tests
-        working-directory: frontend
-        run: npx playwright test ui-ux.spec.ts --reporter=json
-        continue-on-error: true
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-ui-ux
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-          retention-days: 7
-
-  test-performance:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run Performance Tests
-        working-directory: frontend
-        run: npx playwright test performance.spec.ts --reporter=json
-        continue-on-error: true
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-performance
-          path: |
-            frontend/test-results/
-            frontend/playwright-report/
-          retention-days: 7
-
-  test-accessibility:
-    needs: setup-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Configure DNS
-        run: |
-          echo "127.0.0.1 mini-api.local" | sudo tee -a /etc/hosts
-
-      - name: Run Accessibility Tests
-        working-directory: frontend
-        run: npx playwright test accessibility.spec.ts --reporter=json
-        continue-on-error: true
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-accessibility
+          name: test-results-${{ matrix.test-suite.name }}
           path: |
             frontend/test-results/
             frontend/playwright-report/
