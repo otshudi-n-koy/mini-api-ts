@@ -183,6 +183,44 @@ jobs:
         run: npx playwright test ${{ matrix.test-suite.file }} --reporter=list,allure-playwright
         continue-on-error: true
 
+      - name: Create executor.json for suite
+        if: always()
+        working-directory: frontend
+        run: |
+          cat > allure-results/executor.json <<EOF
+          {
+            "name": "GitHub Actions",
+            "type": "github",
+            "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "buildOrder": ${{ github.run_number }},
+            "buildName": "${{ github.workflow }} #${{ github.run_number }}",
+            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/",
+            "reportName": "Allure Report - ${{ github.ref_name }}"
+          }
+          EOF
+
+      - name: Create environment.properties for suite
+        if: always()
+        working-directory: frontend
+        run: |
+          cat > allure-results/environment.properties <<EOF
+          Browser=Chromium
+          Node.Version=$(node --version)
+          OS=${{ runner.os }}
+          Runner=${{ runner.name }}
+          Repository=${{ github.repository }}
+          Branch=${{ github.ref_name }}
+          Commit=${{ github.sha }}
+          Author=${{ github.actor }}
+          Run.ID=${{ github.run_id }}
+          Run.Number=${{ github.run_number }}
+          Workflow=${{ github.workflow }}
+          Test.Suite=${{ matrix.test-suite.name }}
+          Kubernetes=Kind
+          Test.Framework=Playwright
+          EOF
+
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
@@ -244,8 +282,11 @@ jobs:
           find allure-results-temp -type f -name "*.json" -exec cp {} allure-results/ \;
           find allure-results-temp -type f -name "*.txt" -exec cp {} allure-results/ \;
           find allure-results-temp -type f -name "*.png" -exec cp {} allure-results/ \;
+          find allure-results-temp -type f -name "*.properties" -exec cp {} allure-results/ \;
           echo "✅ Found $(ls -1 allure-results | wc -l) result files"
           ls -la allure-results/
+          echo "📋 Executor file check:"
+          cat allure-results/executor.json 2>/dev/null || echo "⚠️ No executor.json found"
 
       - name: Copy Allure history
         if: always()
@@ -260,43 +301,6 @@ jobs:
           else
             echo "ℹ️ No previous history found (first run or history cleared)"
           fi
-
-      - name: Create executor.json
-        if: always()
-        run: |
-          cat > allure-results/executor.json <<EOF
-          {
-            "name": "GitHub Actions",
-            "type": "github",
-            "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-            "buildOrder": ${{ github.run_number }},
-            "buildName": "${{ github.workflow }} #${{ github.run_number }}",
-            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/",
-            "reportName": "Allure Report - ${{ github.ref_name }}"
-          }
-          EOF
-          echo "✅ Executor metadata created"
-
-      - name: Create environment.properties
-        if: always()
-        run: |
-          cat > allure-results/environment.properties <<EOF
-          Browser=Chromium
-          Node.Version=$(node --version)
-          OS=${{ runner.os }}
-          Runner=${{ runner.name }}
-          Repository=${{ github.repository }}
-          Branch=${{ github.ref_name }}
-          Commit=${{ github.sha }}
-          Author=${{ github.actor }}
-          Run.ID=${{ github.run_id }}
-          Run.Number=${{ github.run_number }}
-          Workflow=${{ github.workflow }}
-          Kubernetes=Kind
-          Test.Framework=Playwright
-          EOF
-          echo "✅ Environment metadata created"
 
       - name: Generate Allure report
         run: |

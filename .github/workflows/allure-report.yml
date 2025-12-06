@@ -47,9 +47,12 @@ jobs:
         run: |
           mkdir -p allure-results
           echo "📦 Merging Allure results from all test suites..."
-          find allure-results-temp -type f \( -name "*.json" -o -name "*.txt" -o -name "*.png" \) -exec cp {} allure-results/ \;
+          find allure-results-temp -type f \( -name "*.json" -o -name "*.txt" -o -name "*.png" -o -name "*.properties" \) -exec cp {} allure-results/ \;
           echo "✅ Found $(ls -1 allure-results 2>/dev/null | wc -l) result files"
           ls -la allure-results/ || echo "No results found"
+          echo "📋 Checking for executor metadata:"
+          cat allure-results/executor.json 2>/dev/null || echo "⚠️ No executor.json found in artifacts"
+          cat allure-results/environment.properties 2>/dev/null || echo "⚠️ No environment.properties found in artifacts"
 
       - name: Copy Allure history
         if: always()
@@ -64,42 +67,6 @@ jobs:
           else
             echo "ℹ️ No previous history found (first run or history cleared)"
           fi
-
-      - name: Create executor.json
-        if: always()
-        run: |
-          cat > allure-results/executor.json <<EOF
-          {
-            "name": "GitHub Actions",
-            "type": "github",
-            "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}",
-            "buildOrder": ${{ github.run_number }},
-            "buildName": "Publish Allure Report #${{ github.run_number }}",
-            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}",
-            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/",
-            "reportName": "Allure Report - ${{ github.event.workflow_run.head_branch }}"
-          }
-          EOF
-          echo "✅ Executor metadata created"
-
-      - name: Create environment.properties
-        if: always()
-        run: |
-          cat > allure-results/environment.properties <<EOF
-          Browser=Chromium
-          Node.Version=20
-          OS=${{ runner.os }}
-          Runner=${{ runner.name }}
-          Repository=${{ github.repository }}
-          Branch=${{ github.event.workflow_run.head_branch }}
-          Commit=${{ github.event.workflow_run.head_sha }}
-          Workflow=Publish Allure Report
-          Triggered.By=${{ github.event.workflow_run.name }}
-          Run.ID=${{ github.event.workflow_run.id }}
-          Kubernetes=Kind
-          Test.Framework=Playwright
-          EOF
-          echo "✅ Environment metadata created"
 
       - name: Generate Allure report
         run: |
