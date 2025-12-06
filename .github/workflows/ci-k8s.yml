@@ -227,6 +227,7 @@ jobs:
       - name: Run Playwright E2E tests
         working-directory: ./frontend
         run: |
+          npm ci
           npx playwright install --with-deps chromium
           npm test
         env:
