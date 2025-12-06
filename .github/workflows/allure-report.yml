@@ -68,6 +68,44 @@ jobs:
             echo "ℹ️ No previous history found (first run or history cleared)"
           fi
 
+      - name: Create executor.json
+        if: always()
+        run: |
+          cat > allure-results/executor.json <<EOF
+          {
+            "name": "GitHub Actions",
+            "type": "github",
+            "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}",
+            "buildOrder": ${{ github.run_number }},
+            "buildName": "Publish Allure Report #${{ github.run_number }}",
+            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}",
+            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/",
+            "reportName": "Allure Report - ${{ github.event.workflow_run.head_branch }}"
+          }
+          EOF
+          echo "✅ Executor metadata created"
+          cat allure-results/executor.json
+
+      - name: Create environment.properties
+        if: always()
+        run: |
+          cat > allure-results/environment.properties <<EOF
+          Browser=Chromium
+          Node.Version=20
+          OS=${{ runner.os }}
+          Runner=ubuntu-latest
+          Repository=${{ github.repository }}
+          Branch=${{ github.event.workflow_run.head_branch }}
+          Commit=${{ github.event.workflow_run.head_sha }}
+          Workflow=Publish Allure Report
+          Triggered.By=${{ github.event.workflow_run.name }}
+          Run.ID=${{ github.event.workflow_run.id }}
+          Kubernetes=Kind
+          Test.Framework=Playwright
+          EOF
+          echo "✅ Environment metadata created"
+          cat allure-results/environment.properties
+
       - name: Generate Allure report
         run: |
           npm install -g allure-commandline
