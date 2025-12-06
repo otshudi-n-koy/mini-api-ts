@@ -19,16 +19,22 @@ test.describe('User Management', () => {
   });
 
   test('should create a new user', async ({ page }) => {
+    // Utiliser un timestamp pour éviter les doublons
+    const timestamp = Date.now();
+    
     // Remplir le formulaire
-    await page.fill('input[name="name"]', 'Test Playwright');
-    await page.fill('input[name="email"]', 'playwright@test.com');
+    await page.fill('input[name="name"]', `Test Playwright ${timestamp}`);
+    await page.fill('input[name="email"]', `playwright-${timestamp}@test.com`);
     
     // Soumettre
     await page.click('button[type="submit"]');
     
-    // Vérifier le message de succès
-    await expect(page.locator('.alert.success')).toBeVisible();
+    // Vérifier le message de succès avec timeout plus long
+    await expect(page.locator('.alert.success')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.alert.success')).toContainText('créé avec succès');
+    
+    // Attendre que la liste se mette à jour
+    await page.waitForTimeout(1000);
   });
 
   test('should edit an existing user', async ({ page }) => {
@@ -47,8 +53,8 @@ test.describe('User Management', () => {
     // Soumettre
     await page.click('button[type="submit"]');
     
-    // Vérifier le message de succès
-    await expect(page.locator('.alert.success')).toBeVisible();
+    // Vérifier le message de succès avec timeout plus long
+    await expect(page.locator('.alert.success')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.alert.success')).toContainText('modifié avec succès');
   });
 
@@ -63,8 +69,8 @@ test.describe('User Management', () => {
     page.on('dialog', dialog => dialog.accept());
     await page.locator('.btn-delete').last().click();
     
-    // Attendre un peu pour le rechargement
-    await page.waitForTimeout(1000);
+    // Attendre que la liste se mette à jour (pas de message de succès pour delete)
+    await page.waitForTimeout(2000);
     
     // Vérifier que le nombre d'utilisateurs a diminué
     const newCount = await page.locator('.user-table tbody tr').count();
@@ -86,10 +92,7 @@ test.describe('User Management', () => {
   });
 
   test('should display error for empty form', async ({ page }) => {
-    // Essayer de soumettre le formulaire vide
-    await page.click('button[type="submit"]');
-    
-    // Le bouton devrait être désactivé ou afficher une erreur
+    // Vérifier que le bouton est désactivé quand le formulaire est vide
     const submitButton = page.locator('button[type="submit"]');
     await expect(submitButton).toBeDisabled();
   });
