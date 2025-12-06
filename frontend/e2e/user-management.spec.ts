@@ -113,9 +113,12 @@ test.describe('User Management', () => {
       await page.fill('input[name="email"]', `auto-user-${i}-${timestamp}@test.com`);
       await page.click('button[type="submit"]');
       
-      // Attendre le message de succès et qu'il disparaisse
+      // Attendre le message de succès
       await expect(page.locator('.alert.success')).toBeVisible({ timeout: 10000 });
-      await expect(page.locator('.alert.success')).not.toBeVisible({ timeout: 5000 });
+      
+      // Attendre que le formulaire soit prêt (champs vides et bouton désactivé)
+      await expect(page.locator('input[name="name"]')).toHaveValue('');
+      await expect(page.locator('button[type="submit"]')).toBeDisabled();
       
       console.log(`✅ Utilisateur ${i}/${usersToCreate} créé`);
     }
