@@ -224,6 +224,13 @@ jobs:
           
           echo "✅ All API endpoints are accessible via Ingress with TLS!"
 
+      - name: Setup /etc/hosts for Playwright
+        run: |
+          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+          echo "Adding $NODE_IP mini-api.local to /etc/hosts..."
+          echo "$NODE_IP mini-api.local" | sudo tee -a /etc/hosts
+          cat /etc/hosts | grep mini-api.local
+
       - name: Run Playwright E2E tests
         working-directory: ./frontend
         run: |
