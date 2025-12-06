@@ -149,6 +149,8 @@ jobs:
 
       - name: Run Tests - ${{ matrix.test-suite.name }}
         working-directory: frontend
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: test-results-${{ matrix.test-suite.name }}.json
         run: npx playwright test ${{ matrix.test-suite.file }} --reporter=json
         continue-on-error: true
 
@@ -158,6 +160,7 @@ jobs:
         with:
           name: test-results-${{ matrix.test-suite.name }}
           path: |
+            frontend/test-results-${{ matrix.test-suite.name }}.json
             frontend/test-results/
             frontend/playwright-report/
           retention-days: 7
