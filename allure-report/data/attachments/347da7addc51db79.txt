@@ -1,0 +1,4 @@
+✅ Email invalide détecté: invalidemail
+✅ Email invalide détecté: invalid@
+✅ Email invalide détecté: @invalid.com
+✅ Email invalide détecté: invalid.com

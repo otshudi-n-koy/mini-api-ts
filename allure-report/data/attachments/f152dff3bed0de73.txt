@@ -1,0 +1,4 @@
+✅ Email valide accepté: test@example.com
+✅ Email valide accepté: user.name@domain.co.uk
+✅ Email valide accepté: user+tag@example.com
+✅ Email valide accepté: test123@test-domain.com
