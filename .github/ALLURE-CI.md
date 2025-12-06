@@ -36,11 +36,42 @@ S'exécute après tous les tests (même en cas d'échec) :
 3. **Merge results** : Fusionne les résultats de toutes les suites
 4. **Generate report** : Génère le rapport HTML avec `allure-commandline`
 5. **Upload report** : Upload l'artifact `allure-report` (rétention 30 jours)
-6. **Add summary** : Ajoute des instructions au résumé GitHub Actions
+6. **Deploy to GitHub Pages** : Publie le rapport en ligne (main branch uniquement)
+7. **Add summary** : Ajoute des instructions au résumé GitHub Actions
+
+## 🌐 Accès au rapport en ligne (GitHub Pages)
+
+**URL du rapport :**
+```
+https://<owner>.github.io/<repository>/allure-report/
+```
+
+**Exemple :**
+```
+https://otshudi-n-koy.github.io/mini-api-ts/allure-report/
+```
+
+**Conditions :**
+- ✅ Le push est sur la branche `main`
+- ✅ GitHub Pages est activé dans les paramètres du repository
+- ✅ Le workflow s'est exécuté avec succès
+
+**Activation de GitHub Pages :**
+1. Aller dans **Settings** → **Pages**
+2. Source: **Deploy from a branch**
+3. Branch: **gh-pages** / **/ (root)**
+4. Sauvegarder
 
 ## 📥 Télécharger et consulter le rapport
 
-### Option 1 : Via l'interface GitHub
+### Option 1 : Rapport en ligne (recommandé)
+
+Consulter directement sur GitHub Pages après chaque run sur `main` :
+```
+https://<owner>.github.io/<repository>/allure-report/
+```
+
+### Option 2 : Via l'interface GitHub
 
 1. Aller sur l'onglet **Actions** du repository
 2. Sélectionner le workflow `Parallel E2E Tests`
@@ -49,7 +80,7 @@ S'exécute après tous les tests (même en cas d'échec) :
 5. Télécharger `allure-report.zip`
 6. Décompresser et ouvrir `index.html` dans un navigateur
 
-### Option 2 : Avec Allure CLI
+### Option 3 : Avec Allure CLI
 
 ```bash
 # Télécharger et décompresser allure-report.zip
@@ -59,7 +90,7 @@ unzip allure-report.zip -d allure-report
 npx allure open allure-report
 ```
 
-### Option 3 : Via GitHub CLI
+### Option 4 : Via GitHub CLI
 
 ```bash
 # Lister les artifacts

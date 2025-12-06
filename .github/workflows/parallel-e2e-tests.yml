@@ -231,12 +231,26 @@ jobs:
           path: allure-report/
           retention-days: 30
 
+      - name: Deploy Allure report to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          destination_dir: allure-report
+          keep_files: false
+          commit_message: 'docs: Update Allure test report'
+
       - name: Add report link to summary
         run: |
           echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Allure report generated successfully!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🌐 **Live Report:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "📥 Download the artifact 'allure-report' and open 'index.html' locally" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Or use: \`npx allure open allure-report\`" >> $GITHUB_STEP_SUMMARY
