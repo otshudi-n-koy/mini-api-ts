@@ -159,8 +159,16 @@ jobs:
         working-directory: frontend
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: test-results-${{ matrix.test-suite.name }}.json
-        run: npx playwright test ${{ matrix.test-suite.file }} --reporter=json
+        run: npx playwright test ${{ matrix.test-suite.file }} --reporter=list,allure-playwright
         continue-on-error: true
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.test-suite.name }}
+          path: frontend/allure-results/
+          retention-days: 7
 
       - name: Upload test results
         if: always()
@@ -172,3 +180,63 @@ jobs:
             frontend/test-results/
             frontend/playwright-report/
           retention-days: 7
+
+  # Job pour générer le rapport Allure consolidé
+  generate-allure-report:
+    needs: run-all-tests
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java (required for Allure)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Download all Allure results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: allure-results-temp/
+
+      - name: Merge Allure results
+        run: |
+          mkdir -p allure-results
+          echo "📦 Merging Allure results from all test suites..."
+          find allure-results-temp -type f -name "*.json" -exec cp {} allure-results/ \;
+          find allure-results-temp -type f -name "*.txt" -exec cp {} allure-results/ \;
+          find allure-results-temp -type f -name "*.png" -exec cp {} allure-results/ \;
+          echo "✅ Found $(ls -1 allure-results | wc -l) result files"
+          ls -la allure-results/
+
+      - name: Generate Allure report
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+          echo "✅ Allure report generated"
+
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 30
+
+      - name: Add report link to summary
+        run: |
+          echo "## 📊 Test Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Allure report generated successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download the artifact 'allure-report' and open 'index.html' locally" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Or use: \`npx allure open allure-report\`" >> $GITHUB_STEP_SUMMARY
