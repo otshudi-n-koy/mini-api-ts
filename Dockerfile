@@ -28,5 +28,8 @@ RUN npm ci --only=production
 # Copier le build depuis l'étape builder
 COPY --from=builder /app/dist ./dist
 
+# Copier swagger.json (needed at runtime)
+COPY src/swagger.json ./dist/swagger.json
+
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
