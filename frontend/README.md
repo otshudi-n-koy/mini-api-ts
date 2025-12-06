@@ -46,13 +46,34 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+This project uses [Playwright](https://playwright.dev/) for end-to-end testing with [Allure](https://docs.qameta.io/allure/) reporting.
+
+### Run tests
 
 ```bash
-ng e2e
+npm test                # Run all E2E tests
+npm run test:ui         # Run with Playwright UI
+npm run test:headed     # Run in headed mode (visible browser)
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### View test reports
+
+**HTML Report (Playwright):**
+```bash
+npm run test:report
+```
+
+**Allure Report (detailed analytics):**
+```bash
+# Generate and open report (Windows)
+.\allure-report.ps1
+
+# Or manually
+npm run allure:generate    # Generate HTML report
+npm run allure:open        # Open in browser
+```
+
+**Note:** Allure requires Java. If you get a JAVA_HOME error, use the PowerShell script `allure-report.ps1` which sets it automatically.
 
 ## Additional Resources
 
