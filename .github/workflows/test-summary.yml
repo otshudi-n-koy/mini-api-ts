@@ -73,10 +73,13 @@ jobs:
               continue;
             }
 
-            // Chercher le fichier results.json dans test-results
-            const resultsPath = path.join(artifactPath, 'test-results');
+            // Chercher le fichier JSON généré par Playwright
+            const jsonFileName = `test-results-${suite.artifact.replace('test-results-', '')}.json`;
+            const jsonPath = path.join(artifactPath, jsonFileName);
+            
             let suiteResults = {
               suite: suite.name,
+              artifact: suite.artifact.replace('test-results-', ''),
               status: '✅ Passed',
               passed: 0,
               failed: 0,
@@ -86,48 +89,39 @@ jobs:
             };
 
             try {
-              // Lire tous les fichiers JSON dans test-results
-              if (fs.existsSync(resultsPath)) {
-                const files = fs.readdirSync(resultsPath);
-                const jsonFiles = files.filter(f => f.endsWith('.json') || f === 'results.json');
+              // Lire le fichier JSON de Playwright
+              if (fs.existsSync(jsonPath)) {
+                console.log(`  Reading ${jsonPath}`);
+                const content = fs.readFileSync(jsonPath, 'utf8');
+                const data = JSON.parse(content);
                 
-                for (const file of jsonFiles) {
-                  const content = fs.readFileSync(path.join(resultsPath, file), 'utf8');
-                  const data = JSON.parse(content);
-                  
-                  if (data.suites) {
-                    for (const testSuite of data.suites) {
-                      for (const spec of testSuite.specs || []) {
-                        const testName = spec.title;
-                        const testStatus = spec.ok ? 'passed' : spec.tests?.[0]?.results?.[0]?.status || 'unknown';
-                        
-                        suiteResults.tests.push({
-                          name: testName,
-                          status: testStatus
-                        });
-                        
-                        suiteResults.total++;
-                        if (testStatus === 'passed') {
-                          suiteResults.passed++;
-                        } else if (testStatus === 'failed') {
-                          suiteResults.failed++;
-                          suiteResults.status = '❌ Failed';
-                        } else if (testStatus === 'skipped') {
-                          suiteResults.skipped++;
-                        }
+                if (data.suites) {
+                  for (const testSuite of data.suites) {
+                    for (const spec of testSuite.specs || []) {
+                      const testName = spec.title;
+                      const testStatus = spec.ok ? 'passed' : spec.tests?.[0]?.results?.[0]?.status || 'unknown';
+                      
+                      suiteResults.tests.push({
+                        name: testName,
+                        status: testStatus
+                      });
+                      
+                      suiteResults.total++;
+                      if (testStatus === 'passed') {
+                        suiteResults.passed++;
+                      } else if (testStatus === 'failed') {
+                        suiteResults.failed++;
+                        suiteResults.status = '❌ Failed';
+                      } else if (testStatus === 'skipped') {
+                        suiteResults.skipped++;
                       }
                     }
                   }
                 }
-              }
-
-              if (suiteResults.total === 0) {
-                // Essayer de lire depuis playwright-report
-                const reportPath = path.join(artifactPath, 'playwright-report');
-                if (fs.existsSync(reportPath)) {
-                  console.log(`  Reading from playwright-report for ${suite.name}`);
-                  suiteResults.status = '⚠️ Unknown';
-                }
+              } else {
+                console.log(`  ⚠️  JSON file not found: ${jsonPath}`);
+                // Lister les fichiers dans l'artifact
+                console.log(`  Files in ${artifactPath}:`, fs.readdirSync(artifactPath));
               }
 
             } catch (error) {
@@ -163,7 +157,8 @@ jobs:
           markdown += `|-------|--------|--------|--------|---------|-------|----------|\n`;
 
           for (const result of results) {
-            const detailsLink = `[View Logs](${process.env.RUN_URL})`;
+            const jobName = result.artifact ? `run-all-tests (${result.artifact})` : '';
+            const detailsLink = `[View Logs](${process.env.RUN_URL}${jobName ? `#summary-${result.artifact}` : ''})`;
             markdown += `| **${result.suite}** | ${result.status} | ${result.passed} | ${result.failed} | ${result.skipped} | ${result.total} | ${detailsLink} |\n`;
           }
 
