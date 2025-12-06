@@ -35,8 +35,14 @@ jobs:
         uses: helm/kind-action@v1
         with:
           version: v0.20.0
-          cluster_name: test-cluster-${{ matrix.test-suite.name }}
+          cluster_name: kind
           wait: 5m
+
+      - name: Verify cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          echo "Cluster name: $(kind get clusters)"
 
       - name: Install NGINX Ingress
         run: |
@@ -58,25 +64,62 @@ jobs:
           # Initialize DB
           kubectl apply -f k8s/reset-sql-config.yaml
           kubectl apply -f k8s/db-reset-job.yaml
-          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s
+          kubectl wait --for=condition=complete job/db-reset-job --timeout=120s || {
+            echo "❌ DB reset failed"
+            kubectl logs job/db-reset-job
+            exit 1
+          }
           
           # Build and load images
+          echo "🏗️ Building API image..."
           docker build -t mini-api:latest .
-          kind load docker-image mini-api:latest --name test-cluster-${{ matrix.test-suite.name }}
+          echo "📦 Loading API image into Kind cluster..."
+          kind load docker-image mini-api:latest --name kind
           
+          echo "🏗️ Building Frontend image..."
           cd frontend
           docker build -t mini-api-frontend:latest .
-          kind load docker-image mini-api-frontend:latest --name test-cluster-${{ matrix.test-suite.name }}
+          echo "📦 Loading Frontend image into Kind cluster..."
+          kind load docker-image mini-api-frontend:latest --name kind
           cd ..
           
+          echo "✅ Images loaded successfully"
+          docker images | grep mini-api
+          
+          # Verify images are available in Kind
+          echo "🔍 Verifying images in Kind cluster..."
+          docker exec kind-control-plane crictl images | grep mini-api || {
+            echo "⚠️ Warning: Images might not be visible in Kind yet"
+          }
+          
           # Deploy API and Frontend
+          echo "🚀 Deploying API..."
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/api-service.yaml
-          kubectl wait --for=condition=ready pod -l app=mini-api --timeout=300s
           
+          echo "⏳ Waiting for API pod to be ready..."
+          kubectl wait --for=condition=ready pod -l app=mini-api --timeout=300s || {
+            echo "❌ API deployment failed"
+            kubectl get deployments
+            kubectl get pods -l app=mini-api
+            kubectl describe pod -l app=mini-api | tail -50
+            kubectl logs -l app=mini-api --tail=50 || echo "No logs available"
+            exit 1
+          }
+          
+          echo "🚀 Deploying Frontend..."
           kubectl apply -f k8s/frontend-deployment.yaml
           kubectl apply -f k8s/frontend-service.yaml
-          kubectl wait --for=condition=ready pod -l app=mini-api-frontend --timeout=300s
+          
+          echo "⏳ Waiting for Frontend pod to be ready..."
+          kubectl wait --for=condition=ready pod -l app=mini-api-frontend --timeout=300s || {
+            echo "❌ Frontend deployment failed"
+            kubectl get deployments
+            kubectl get pods -l app=mini-api-frontend
+            kubectl describe pod -l app=mini-api-frontend | tail -50
+            kubectl logs -l app=mini-api-frontend --tail=50 || echo "No logs available"
+            exit 1
+          }
           
           # Setup Ingress
           kubectl apply -f k8s/frontend-ingress.yaml
