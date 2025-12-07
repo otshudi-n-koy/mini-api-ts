@@ -1,1 +1,0 @@
-⚠ Swagger requires authentication - skipping interactive tests
