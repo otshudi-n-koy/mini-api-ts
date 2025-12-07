@@ -1,2 +1,7 @@
 "BROKEN","EPIC","FAILED","FEATURE","PASSED","SKIPPED","STORY","UNKNOWN"
-"0","","2","","7","0","","0"
+"0","User Management","1","User Registration","2","0","US-101: As a user, I want to register with my name and email","0"
+"0","User Management","0","User Registration","2","0","US-102: As a user, I want email validation to prevent typos","0"
+"0","User Management","0","Data Sanitization","1","0","US-106: As a system, I want to prevent XSS attacks via input sanitization","0"
+"0","User Management","0","Input Validation","1","0","US-104: As a system, I want to enforce field length limits","0"
+"0","User Management","1","Data Sanitization","0","0","US-103: As a system, I want to trim whitespace from user inputs","0"
+"0","User Management","0","User Experience","1","0","US-105: As a user, I want immediate validation feedback","0"
