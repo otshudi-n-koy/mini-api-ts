@@ -27,12 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         test-suite:
-          # - { name: 'user-management', file: 'user-management.spec.ts' }
-          # - { name: 'api-integration', file: 'api-integration.spec.ts' }
           - { name: 'form-validation', file: 'form-validation.spec.ts' }
-          # - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
-          # - { name: 'performance', file: 'performance.spec.ts' }
-          # - { name: 'accessibility', file: 'accessibility.spec.ts' }
+          - { name: 'user-management', file: 'user-management.spec.ts' }
+          - { name: 'api-integration', file: 'api-integration.spec.ts' }
+          - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
+          - { name: 'performance', file: 'performance.spec.ts' }
+          - { name: 'accessibility', file: 'accessibility.spec.ts' }
     
     steps:
       - name: Checkout code
