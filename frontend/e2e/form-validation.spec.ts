@@ -1,19 +1,17 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 test.describe('Form Validation Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('should require name field', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Registration' },
-      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'required-fields' }
-    );
+  test('should require name field', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Registration');
+    await allure.story('US-101: As a user, I want to register with my name and email');
+    await allure.severity('critical');
+    await allure.tags('validation', 'required-fields');
     
     // Remplir seulement l'email
     await page.fill('input[name="email"]', 'test@example.com');
@@ -23,15 +21,12 @@ test.describe('Form Validation Tests', () => {
     await expect(submitButton).toBeDisabled();
   });
 
-  test('should require email field', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Registration' },
-      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'required-fields' }
-    );
+  test('should require email field', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Registration');
+    await allure.story('US-101: As a user, I want to register with my name and email');
+    await allure.severity('critical');
+    await allure.tags('validation', 'required-fields');
     
     // Remplir seulement le nom
     await page.fill('input[name="name"]', 'Test User');
@@ -41,15 +36,12 @@ test.describe('Form Validation Tests', () => {
     await expect(submitButton).toBeDisabled();
   });
 
-  test('should validate email format', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Registration' },
-      { type: 'story', description: 'US-102: As a user, I want email validation to prevent typos' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'email-format' }
-    );
+  test('should validate email format', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Registration');
+    await allure.story('US-102: As a user, I want email validation to prevent typos');
+    await allure.severity('normal');
+    await allure.tags('validation', 'email-format');
     
     await page.fill('input[name="name"]', 'Test User');
     
@@ -75,15 +67,12 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should accept valid email formats', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Registration' },
-      { type: 'story', description: 'US-102: As a user, I want email validation to prevent typos' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'email-format' }
-    );
+  test('should accept valid email formats', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Registration');
+    await allure.story('US-102: As a user, I want email validation to prevent typos');
+    await allure.severity('normal');
+    await allure.tags('validation', 'email-format');
     
     const validEmails = [
       'test@example.com',
@@ -108,15 +97,12 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should trim whitespace from inputs', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'Data Sanitization' },
-      { type: 'story', description: 'US-103: As a system, I want to trim whitespace from user inputs' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'sanitization' },
-      { type: 'tag', description: 'whitespace' }
-    );
+  test('should trim whitespace from inputs', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Data Sanitization');
+    await allure.story('US-103: As a system, I want to trim whitespace from user inputs');
+    await allure.severity('normal');
+    await allure.tags('sanitization', 'whitespace');
     
     const timestamp = Date.now();
     
@@ -141,15 +127,12 @@ test.describe('Form Validation Tests', () => {
     expect(email?.trim()).toBe(`test-${timestamp}@example.com`);
   });
 
-  test('should enforce maximum length for name', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'Input Validation' },
-      { type: 'story', description: 'US-104: As a system, I want to enforce field length limits' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'length-limit' }
-    );
+  test('should enforce maximum length for name', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Input Validation');
+    await allure.story('US-104: As a system, I want to enforce field length limits');
+    await allure.severity('minor');
+    await allure.tags('validation', 'length-limit');
     
     // Générer un nom très long (plus de 100 caractères)
     const longName = 'A'.repeat(150);
@@ -168,15 +151,12 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should clear form after successful submission', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Registration' },
-      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'form-behavior' },
-      { type: 'tag', description: 'reset' }
-    );
+  test('should clear form after successful submission', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Registration');
+    await allure.story('US-101: As a user, I want to register with my name and email');
+    await allure.severity('normal');
+    await allure.tags('form-behavior', 'reset');
     
     const timestamp = Date.now();
     
@@ -194,15 +174,12 @@ test.describe('Form Validation Tests', () => {
     expect(emailValue).toBe('');
   });
 
-  test('should show validation feedback on blur', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'User Experience' },
-      { type: 'story', description: 'US-105: As a user, I want immediate validation feedback' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'ux' },
-      { type: 'tag', description: 'validation-feedback' }
-    );
+  test('should show validation feedback on blur', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Experience');
+    await allure.story('US-105: As a user, I want immediate validation feedback');
+    await allure.severity('minor');
+    await allure.tags('ux', 'validation-feedback');
     
     // Cliquer dans le champ email puis sortir sans remplir
     await page.click('input[name="email"]');
@@ -217,16 +194,12 @@ test.describe('Form Validation Tests', () => {
     expect(hasError).toBeTruthy();
   });
 
-  test('should prevent special characters in name', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Management' },
-      { type: 'feature', description: 'Data Sanitization' },
-      { type: 'story', description: 'US-106: As a system, I want to prevent XSS attacks via input sanitization' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'security' },
-      { type: 'tag', description: 'sanitization' },
-      { type: 'tag', description: 'xss-prevention' }
-    );
+  test('should prevent special characters in name', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Data Sanitization');
+    await allure.story('US-106: As a system, I want to prevent XSS attacks via input sanitization');
+    await allure.severity('critical');
+    await allure.tags('security', 'sanitization', 'xss-prevention');
     
     const timestamp = Date.now();
     const specialChars = ['<', '>', '&', '"', "'", '/'];

@@ -9,7 +9,21 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html'],
-    ['allure-playwright']
+    ['allure-playwright', {
+      detail: true,
+      outputFolder: 'allure-results',
+      suiteTitle: true,
+      categories: [
+        {
+          name: 'Critical failures',
+          matchedStatuses: ['failed'],
+        },
+      ],
+      environmentInfo: {
+        framework: 'playwright',
+        node_version: process.version,
+      },
+    }]
   ],
   use: {
     baseURL: 'https://mini-api.local',

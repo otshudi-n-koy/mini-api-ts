@@ -5,7 +5,15 @@ test.describe('Performance Tests', () => {
     await page.goto('/');
   });
 
-  test('should load page within acceptable time', async ({ page }) => {
+  test('should load page within acceptable time', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'Page Load Performance' },
+      { type: 'story', description: 'US-501: As a user, I want fast page load times' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'load-time' }
+    );
     const startTime = Date.now();
     
     await page.goto('/', { waitUntil: 'networkidle' });
@@ -17,7 +25,15 @@ test.describe('Performance Tests', () => {
     expect(loadTime).toBeLessThan(3000);
   });
 
-  test('should load user list quickly', async ({ page }) => {
+  test('should load user list quickly', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'Data Loading Performance' },
+      { type: 'story', description: 'US-502: As a user, I want quick data loading' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'data-load' }
+    );
     const startTime = Date.now();
     
     await page.waitForSelector('.user-table tbody tr', { timeout: 5000 });
@@ -29,7 +45,16 @@ test.describe('Performance Tests', () => {
     expect(loadTime).toBeLessThan(2000);
   });
 
-  test('should handle large dataset efficiently', async ({ page }) => {
+  test('should handle large dataset efficiently', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'Scalability' },
+      { type: 'story', description: 'US-503: As a system, I want to handle large datasets efficiently' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'scalability' },
+      { type: 'tag', description: 'batch' }
+    );
     // Créer plusieurs utilisateurs rapidement
     const usersToCreate = 20;
     const timestamp = Date.now();
@@ -59,7 +84,15 @@ test.describe('Performance Tests', () => {
     expect(count).toBeGreaterThanOrEqual(usersToCreate);
   });
 
-  test('should respond to user input quickly', async ({ page }) => {
+  test('should respond to user input quickly', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'Input Responsiveness' },
+      { type: 'story', description: 'US-504: As a user, I want immediate input feedback' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'responsiveness' }
+    );
     const nameInput = page.locator('input[name="name"]');
     
     const startTime = Date.now();
@@ -72,7 +105,16 @@ test.describe('Performance Tests', () => {
     expect(responseTime).toBeLessThan(100);
   });
 
-  test('should handle rapid form submissions', async ({ page }) => {
+  test('should handle rapid form submissions', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'Concurrent Operations' },
+      { type: 'story', description: 'US-505: As a system, I want to handle rapid submissions' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'concurrent' },
+      { type: 'tag', description: 'stress' }
+    );
     const timestamp = Date.now();
     const submissionCount = 5;
     const startTime = Date.now();
@@ -96,7 +138,15 @@ test.describe('Performance Tests', () => {
     expect(count).toBeGreaterThanOrEqual(submissionCount);
   });
 
-  test('should efficiently update user list after operations', async ({ page }) => {
+  test('should efficiently update user list after operations', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'Performance' },
+      { type: 'feature', description: 'UI Update Performance' },
+      { type: 'story', description: 'US-506: As a user, I want fast UI updates after operations' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'performance' },
+      { type: 'tag', description: 'ui-update' }
+    );
     const timestamp = Date.now();
     
     // Créer un utilisateur

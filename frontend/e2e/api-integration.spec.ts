@@ -5,7 +5,15 @@ test.describe('API Integration Tests', () => {
     await page.goto('/');
   });
 
-  test('should handle API errors gracefully', async ({ page }) => {
+  test('should handle API errors gracefully', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'Error Handling' },
+      { type: 'story', description: 'US-301: As a system, I want to handle API errors gracefully' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'api' },
+      { type: 'tag', description: 'error-handling' }
+    );
     // Intercepter les requêtes API et simuler une erreur
     await page.route('**/api/v1/users', route => {
       route.fulfill({
@@ -25,7 +33,15 @@ test.describe('API Integration Tests', () => {
     expect(count).toBe(0);
   });
 
-  test('should display loading state during API calls', async ({ page }) => {
+  test('should display loading state during API calls', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'Loading States' },
+      { type: 'story', description: 'US-302: As a user, I want to see loading indicators during API calls' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'ux' },
+      { type: 'tag', description: 'loading' }
+    );
     // Intercepter et retarder la réponse
     await page.route('**/api/v1/users', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -39,7 +55,16 @@ test.describe('API Integration Tests', () => {
     // Le loading peut ne pas être visible si la réponse est trop rapide
   });
 
-  test('should send correct POST request for user creation', async ({ page }) => {
+  test('should send correct POST request for user creation', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'HTTP Requests' },
+      { type: 'story', description: 'US-303: As a system, I want to send correctly formatted API requests' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'api' },
+      { type: 'tag', description: 'http' },
+      { type: 'tag', description: 'post' }
+    );
     const timestamp = Date.now();
     let capturedRequest: any = null;
 
@@ -63,7 +88,16 @@ test.describe('API Integration Tests', () => {
     expect(capturedRequest.email).toBe(`api-test-${timestamp}@test.com`);
   });
 
-  test('should handle network timeout', async ({ page, context }) => {
+  test('should handle network timeout', async ({ page, context }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'Network Resilience' },
+      { type: 'story', description: 'US-304: As a system, I want to handle network timeouts gracefully' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'api' },
+      { type: 'tag', description: 'timeout' },
+      { type: 'tag', description: 'resilience' }
+    );
     // Simuler une timeout en retardant indéfiniment
     await page.route('**/api/v1/users/add', async route => {
       // Ne jamais répondre pour simuler un timeout
@@ -82,7 +116,15 @@ test.describe('API Integration Tests', () => {
     // L'application devrait afficher une erreur
   });
 
-  test('should refresh user list after successful creation', async ({ page }) => {
+  test('should refresh user list after successful creation', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'Data Synchronization' },
+      { type: 'story', description: 'US-305: As a user, I want to see updated data after operations' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'sync' },
+      { type: 'tag', description: 'refresh' }
+    );
     const timestamp = Date.now();
     
     // Compter les utilisateurs avant
@@ -103,7 +145,16 @@ test.describe('API Integration Tests', () => {
     expect(finalCount).toBe(initialCount + 1);
   });
 
-  test('should handle duplicate email error', async ({ page }) => {
+  test('should handle duplicate email error', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'API Integration' },
+      { type: 'feature', description: 'Data Validation' },
+      { type: 'story', description: 'US-306: As a system, I want to prevent duplicate email addresses' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'duplicate' },
+      { type: 'tag', description: 'email' }
+    );
     const timestamp = Date.now();
     const email = `duplicate-${timestamp}@test.com`;
 

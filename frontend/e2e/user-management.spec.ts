@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 test.describe('User Management', () => {
   test.beforeEach(async ({ page }) => {
@@ -6,10 +7,22 @@ test.describe('User Management', () => {
   });
 
   test('should display the application title', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Application Layout');
+    await allure.story('US-201: As a user, I want to see the application title');
+    await allure.severity('minor');
+    await allure.tags('ui', 'layout');
+    
     await expect(page.locator('h1')).toContainText('Mini API TS - Frontend');
   });
 
   test('should display user list', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User List Display');
+    await allure.story('US-202: As a user, I want to view all registered users');
+    await allure.severity('critical');
+    await allure.tags('user-list', 'display');
+    
     // Attend que la table soit chargée
     await page.waitForSelector('.user-table', { timeout: 5000 });
     
@@ -19,6 +32,12 @@ test.describe('User Management', () => {
   });
 
   test('should create a new user', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User CRUD Operations');
+    await allure.story('US-203: As a user, I want to create new users');
+    await allure.severity('critical');
+    await allure.tags('crud', 'create');
+    
     // Utiliser un timestamp pour éviter les doublons
     const timestamp = Date.now();
     
@@ -38,6 +57,12 @@ test.describe('User Management', () => {
   });
 
   test('should edit an existing user', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User CRUD Operations');
+    await allure.story('US-204: As a user, I want to edit existing users');
+    await allure.severity('critical');
+    await allure.tags('crud', 'update');
+    
     // Attendre que la table soit chargée
     await page.waitForSelector('.user-table');
     
@@ -59,6 +84,12 @@ test.describe('User Management', () => {
   });
 
   test('should delete a user', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User CRUD Operations');
+    await allure.story('US-205: As a user, I want to delete users');
+    await allure.severity('critical');
+    await allure.tags('crud', 'delete');
+    
     // Attendre que la table soit chargée
     await page.waitForSelector('.user-table');
     
@@ -78,6 +109,12 @@ test.describe('User Management', () => {
   });
 
   test('should cancel edit mode', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('User Experience');
+    await allure.story('US-206: As a user, I want to cancel editing operations');
+    await allure.severity('normal');
+    await allure.tags('ux', 'cancel');
+    
     await page.waitForSelector('.user-table');
     
     // Cliquer sur Modifier
@@ -92,12 +129,24 @@ test.describe('User Management', () => {
   });
 
   test('should display error for empty form', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Input Validation');
+    await allure.story('US-207: As a system, I want to prevent empty form submissions');
+    await allure.severity('critical');
+    await allure.tags('validation', 'required-fields');
+    
     // Vérifier que le bouton est désactivé quand le formulaire est vide
     const submitButton = page.locator('button[type="submit"]');
     await expect(submitButton).toBeDisabled();
   });
 
   test('should create 10 users automatically', async ({ page }) => {
+    await allure.epic('User Management');
+    await allure.feature('Batch Operations');
+    await allure.story('US-208: As a user, I want to create multiple users efficiently');
+    await allure.severity('normal');
+    await allure.tags('batch', 'automation');
+    
     const timestamp = Date.now();
     const usersToCreate = 10;
     
