@@ -5,14 +5,16 @@ test.describe('Authentication Tests', () => {
   let swaggerAvailable = false;
 
   test.beforeAll(async ({ browser }) => {
-    // Check if Swagger is accessible
+    // Check if Swagger is accessible (401 is OK - it means auth is required)
     const page = await browser.newPage();
     try {
       const response = await page.goto('https://mini-api.local/docs/', { 
         waitUntil: 'domcontentloaded',
         timeout: 5000 
       });
-      swaggerAvailable = response?.ok() || false;
+      // Accept 200, 401, 403 as "available" - we're testing auth anyway
+      swaggerAvailable = response?.status() ? [200, 401, 403].includes(response.status()) : false;
+      console.log(`✓ Swagger responded with status: ${response?.status()}`);
     } catch (error) {
       console.log('⚠ Swagger UI not accessible on https://mini-api.local/docs/ - tests will be skipped');
       swaggerAvailable = false;
