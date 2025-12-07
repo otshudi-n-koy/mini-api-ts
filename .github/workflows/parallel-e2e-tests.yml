@@ -33,6 +33,7 @@ jobs:
           - { name: 'ui-ux', file: 'ui-ux.spec.ts' }
           - { name: 'performance', file: 'performance.spec.ts' }
           - { name: 'accessibility', file: 'accessibility.spec.ts' }
+          - { name: 'authentication', file: 'authentication.spec.ts' }
     
     steps:
       - name: Checkout code
