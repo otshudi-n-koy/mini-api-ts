@@ -15,8 +15,32 @@ export default defineConfig({
       suiteTitle: true,
       categories: [
         {
-          name: 'Critical failures',
+          name: 'Ignored tests',
+          matchedStatuses: ['skipped'],
+        },
+        {
+          name: 'Infrastructure problems',
+          matchedStatuses: ['broken', 'failed'],
+          messageRegex: /.*timeout.*|.*network.*|.*connection.*/i,
+        },
+        {
+          name: 'Outdated tests',
+          matchedStatuses: ['broken'],
+          messageRegex: /.*element.*not found.*|.*selector.*not found.*/i,
+        },
+        {
+          name: 'Product defects',
           matchedStatuses: ['failed'],
+          messageRegex: /.*expect.*toBe.*|.*expected.*but got.*/i,
+        },
+        {
+          name: 'Test defects',
+          matchedStatuses: ['broken'],
+        },
+        {
+          name: 'Critical severity failures',
+          matchedStatuses: ['failed'],
+          traceRegex: /.*critical.*/i,
         },
       ],
       environmentInfo: {
