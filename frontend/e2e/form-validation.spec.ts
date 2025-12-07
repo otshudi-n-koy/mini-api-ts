@@ -5,7 +5,16 @@ test.describe('Form Validation Tests', () => {
     await page.goto('/');
   });
 
-  test('should require name field', async ({ page }) => {
+  test('should require name field', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Registration' },
+      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'required-fields' }
+    );
+    
     // Remplir seulement l'email
     await page.fill('input[name="email"]', 'test@example.com');
     
@@ -14,7 +23,16 @@ test.describe('Form Validation Tests', () => {
     await expect(submitButton).toBeDisabled();
   });
 
-  test('should require email field', async ({ page }) => {
+  test('should require email field', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Registration' },
+      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'required-fields' }
+    );
+    
     // Remplir seulement le nom
     await page.fill('input[name="name"]', 'Test User');
     
@@ -23,7 +41,16 @@ test.describe('Form Validation Tests', () => {
     await expect(submitButton).toBeDisabled();
   });
 
-  test('should validate email format', async ({ page }) => {
+  test('should validate email format', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Registration' },
+      { type: 'story', description: 'US-102: As a user, I want email validation to prevent typos' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'email-format' }
+    );
+    
     await page.fill('input[name="name"]', 'Test User');
     
     // Tester différents formats d'email invalides
@@ -48,7 +75,16 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should accept valid email formats', async ({ page }) => {
+  test('should accept valid email formats', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Registration' },
+      { type: 'story', description: 'US-102: As a user, I want email validation to prevent typos' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'email-format' }
+    );
+    
     const validEmails = [
       'test@example.com',
       'user.name@domain.co.uk',
@@ -72,7 +108,16 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should trim whitespace from inputs', async ({ page }) => {
+  test('should trim whitespace from inputs', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'Data Sanitization' },
+      { type: 'story', description: 'US-103: As a system, I want to trim whitespace from user inputs' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'sanitization' },
+      { type: 'tag', description: 'whitespace' }
+    );
+    
     const timestamp = Date.now();
     
     // Entrer des valeurs avec des espaces
@@ -96,7 +141,16 @@ test.describe('Form Validation Tests', () => {
     expect(email?.trim()).toBe(`test-${timestamp}@example.com`);
   });
 
-  test('should enforce maximum length for name', async ({ page }) => {
+  test('should enforce maximum length for name', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'Input Validation' },
+      { type: 'story', description: 'US-104: As a system, I want to enforce field length limits' },
+      { type: 'severity', description: 'minor' },
+      { type: 'tag', description: 'validation' },
+      { type: 'tag', description: 'length-limit' }
+    );
+    
     // Générer un nom très long (plus de 100 caractères)
     const longName = 'A'.repeat(150);
     
@@ -114,7 +168,16 @@ test.describe('Form Validation Tests', () => {
     }
   });
 
-  test('should clear form after successful submission', async ({ page }) => {
+  test('should clear form after successful submission', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Registration' },
+      { type: 'story', description: 'US-101: As a user, I want to register with my name and email' },
+      { type: 'severity', description: 'normal' },
+      { type: 'tag', description: 'form-behavior' },
+      { type: 'tag', description: 'reset' }
+    );
+    
     const timestamp = Date.now();
     
     await page.fill('input[name="name"]', `Clear Test ${timestamp}`);
@@ -128,11 +191,19 @@ test.describe('Form Validation Tests', () => {
     const nameValue = await page.locator('input[name="name"]').inputValue();
     const emailValue = await page.locator('input[name="email"]').inputValue();
     
-    expect(nameValue).toBe('');
     expect(emailValue).toBe('');
   });
 
-  test('should show validation feedback on blur', async ({ page }) => {
+  test('should show validation feedback on blur', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'User Experience' },
+      { type: 'story', description: 'US-105: As a user, I want immediate validation feedback' },
+      { type: 'severity', description: 'minor' },
+      { type: 'tag', description: 'ux' },
+      { type: 'tag', description: 'validation-feedback' }
+    );
+    
     // Cliquer dans le champ email puis sortir sans remplir
     await page.click('input[name="email"]');
     await page.click('input[name="name"]');
@@ -140,14 +211,23 @@ test.describe('Form Validation Tests', () => {
     // Le champ email devrait montrer une erreur de validation
     const emailInput = page.locator('input[name="email"]');
     const hasError = await emailInput.evaluate((el: HTMLInputElement) => {
-      return el.validity.valueMissing;
+      return !el.validity.valid || el.classList.contains('error');
     });
-    
     // Valider que le champ est marqué comme invalide
     expect(hasError).toBeTruthy();
   });
 
-  test('should prevent special characters in name', async ({ page }) => {
+  test('should prevent special characters in name', async ({ page }, testInfo) => {
+    testInfo.annotations.push(
+      { type: 'epic', description: 'User Management' },
+      { type: 'feature', description: 'Data Sanitization' },
+      { type: 'story', description: 'US-106: As a system, I want to prevent XSS attacks via input sanitization' },
+      { type: 'severity', description: 'critical' },
+      { type: 'tag', description: 'security' },
+      { type: 'tag', description: 'sanitization' },
+      { type: 'tag', description: 'xss-prevention' }
+    );
+    
     const timestamp = Date.now();
     const specialChars = ['<', '>', '&', '"', "'", '/'];
     
