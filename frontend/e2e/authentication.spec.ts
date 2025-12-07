@@ -8,13 +8,13 @@ test.describe('Authentication Tests', () => {
     // Check if Swagger is accessible
     const page = await browser.newPage();
     try {
-      const response = await page.goto('http://localhost:8080/docs', { 
+      const response = await page.goto('https://mini-api.local/docs/', { 
         waitUntil: 'domcontentloaded',
         timeout: 5000 
       });
       swaggerAvailable = response?.ok() || false;
     } catch (error) {
-      console.log('⚠ Swagger UI not accessible on localhost:8080 - tests will be skipped');
+      console.log('⚠ Swagger UI not accessible on https://mini-api.local/docs/ - tests will be skipped');
       swaggerAvailable = false;
     } finally {
       await page.close();
@@ -22,10 +22,10 @@ test.describe('Authentication Tests', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    test.skip(!swaggerAvailable, 'Swagger UI not available. Run: kubectl port-forward svc/api-service 8080:3000');
+    test.skip(!swaggerAvailable, 'Swagger UI not available at https://mini-api.local/docs/');
     
     // Navigate to Swagger UI
-    await page.goto('http://localhost:8080/docs', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://mini-api.local/docs/', { waitUntil: 'domcontentloaded' });
   });
 
   test('should display Swagger UI authentication section', async ({ page }) => {
