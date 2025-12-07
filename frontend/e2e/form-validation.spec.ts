@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import * as allure from 'allure-js-commons';
+import { allure } from 'allure-playwright';
 
 test.describe('Form Validation Tests', () => {
   test.beforeEach(async ({ page }) => {

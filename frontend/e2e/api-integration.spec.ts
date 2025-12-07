@@ -1,19 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { allure } from 'allure-playwright';
 
 test.describe('API Integration Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('should handle API errors gracefully', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'Error Handling' },
-      { type: 'story', description: 'US-301: As a system, I want to handle API errors gracefully' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'api' },
-      { type: 'tag', description: 'error-handling' }
-    );
+  test('should handle API errors gracefully', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('Error Handling');
+    await allure.story('US-301: As a system, I want to handle API errors gracefully');
+    await allure.severity('critical');
+    await allure.tags('api', 'error-handling');
+    
     // Intercepter les requêtes API et simuler une erreur
     await page.route('**/api/v1/users', route => {
       route.fulfill({
@@ -33,15 +33,14 @@ test.describe('API Integration Tests', () => {
     expect(count).toBe(0);
   });
 
-  test('should display loading state during API calls', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'Loading States' },
-      { type: 'story', description: 'US-302: As a user, I want to see loading indicators during API calls' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'ux' },
-      { type: 'tag', description: 'loading' }
-    );
+  test('should display loading state during API calls', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('Loading States');
+    await allure.story('US-302: As a user, I want to see loading indicators during API calls');
+    await allure.severity('normal');
+    await allure.tags('ux', 'loading');
+    
     // Intercepter et retarder la réponse
     await page.route('**/api/v1/users', async route => {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -55,16 +54,14 @@ test.describe('API Integration Tests', () => {
     // Le loading peut ne pas être visible si la réponse est trop rapide
   });
 
-  test('should send correct POST request for user creation', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'HTTP Requests' },
-      { type: 'story', description: 'US-303: As a system, I want to send correctly formatted API requests' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'api' },
-      { type: 'tag', description: 'http' },
-      { type: 'tag', description: 'post' }
-    );
+  test('should send correct POST request for user creation', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('HTTP Requests');
+    await allure.story('US-303: As a system, I want to send correctly formatted API requests');
+    await allure.severity('critical');
+    await allure.tags('api', 'http', 'post');
+    
     const timestamp = Date.now();
     let capturedRequest: any = null;
 
@@ -88,16 +85,14 @@ test.describe('API Integration Tests', () => {
     expect(capturedRequest.email).toBe(`api-test-${timestamp}@test.com`);
   });
 
-  test('should handle network timeout', async ({ page, context }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'Network Resilience' },
-      { type: 'story', description: 'US-304: As a system, I want to handle network timeouts gracefully' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'api' },
-      { type: 'tag', description: 'timeout' },
-      { type: 'tag', description: 'resilience' }
-    );
+  test('should handle network timeout', async ({ page, context }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('Network Resilience');
+    await allure.story('US-304: As a system, I want to handle network timeouts gracefully');
+    await allure.severity('critical');
+    await allure.tags('api', 'timeout', 'resilience');
+    
     // Simuler une timeout en retardant indéfiniment
     await page.route('**/api/v1/users/add', async route => {
       // Ne jamais répondre pour simuler un timeout
@@ -116,15 +111,14 @@ test.describe('API Integration Tests', () => {
     // L'application devrait afficher une erreur
   });
 
-  test('should refresh user list after successful creation', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'Data Synchronization' },
-      { type: 'story', description: 'US-305: As a user, I want to see updated data after operations' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'sync' },
-      { type: 'tag', description: 'refresh' }
-    );
+  test('should refresh user list after successful creation', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('Data Synchronization');
+    await allure.story('US-305: As a user, I want to see updated data after operations');
+    await allure.severity('critical');
+    await allure.tags('sync', 'refresh');
+    
     const timestamp = Date.now();
     
     // Compter les utilisateurs avant
@@ -145,16 +139,14 @@ test.describe('API Integration Tests', () => {
     expect(finalCount).toBe(initialCount + 1);
   });
 
-  test('should handle duplicate email error', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'API Integration' },
-      { type: 'feature', description: 'Data Validation' },
-      { type: 'story', description: 'US-306: As a system, I want to prevent duplicate email addresses' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'duplicate' },
-      { type: 'tag', description: 'email' }
-    );
+  test('should handle duplicate email error', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('API Integration');
+    await allure.feature('Data Validation');
+    await allure.story('US-306: As a system, I want to prevent duplicate email addresses');
+    await allure.severity('critical');
+    await allure.tags('validation', 'duplicate', 'email');
+    
     const timestamp = Date.now();
     const email = `duplicate-${timestamp}@test.com`;
 

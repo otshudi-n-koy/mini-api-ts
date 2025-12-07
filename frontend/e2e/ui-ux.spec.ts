@@ -1,20 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { allure } from 'allure-playwright';
 
 test.describe('UI/UX Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('should have responsive design', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Responsive Design' },
-      { type: 'story', description: 'US-401: As a user, I want the app to work on different screen sizes' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'responsive' },
-      { type: 'tag', description: 'mobile' },
-      { type: 'tag', description: 'tablet' }
-    );
+  test('should have responsive design', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Responsive Design');
+    await allure.story('US-401: As a user, I want the app to work on different screen sizes');
+    await allure.severity('critical');
+    await allure.tags('responsive', 'mobile', 'tablet');
+    
     // Tester différentes tailles d'écran
     const viewports = [
       { width: 1920, height: 1080, name: 'Desktop Large' },
@@ -35,15 +34,14 @@ test.describe('UI/UX Tests', () => {
     }
   });
 
-  test('should have accessible color contrast', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Accessibility' },
-      { type: 'story', description: 'US-402: As a user, I want readable text with good contrast' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'contrast' }
-    );
+  test('should have accessible color contrast', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Accessibility');
+    await allure.story('US-402: As a user, I want readable text with good contrast');
+    await allure.severity('normal');
+    await allure.tags('accessibility', 'contrast');
+    
     // Vérifier la présence d'éléments principaux
     const elements = [
       page.locator('h1'),
@@ -59,15 +57,14 @@ test.describe('UI/UX Tests', () => {
     }
   });
 
-  test('should show hover effects on interactive elements', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Interactive Feedback' },
-      { type: 'story', description: 'US-403: As a user, I want visual feedback on interactive elements' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'hover' },
-      { type: 'tag', description: 'feedback' }
-    );
+  test('should show hover effects on interactive elements', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Interactive Feedback');
+    await allure.story('US-403: As a user, I want visual feedback on interactive elements');
+    await allure.severity('minor');
+    await allure.tags('hover', 'feedback');
+    
     await page.waitForSelector('.user-table');
     
     // Hover sur le premier bouton "Modifier"
@@ -86,15 +83,14 @@ test.describe('UI/UX Tests', () => {
     await page.waitForTimeout(300);
   });
 
-  test('should display success messages with proper styling', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Notification System' },
-      { type: 'story', description: 'US-404: As a user, I want clear success notifications' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'notifications' },
-      { type: 'tag', description: 'alerts' }
-    );
+  test('should display success messages with proper styling', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Notification System');
+    await allure.story('US-404: As a user, I want clear success notifications');
+    await allure.severity('normal');
+    await allure.tags('notifications', 'alerts');
+    
     const timestamp = Date.now();
     
     await page.fill('input[name="name"]', `UI Test ${timestamp}`);
@@ -116,16 +112,14 @@ test.describe('UI/UX Tests', () => {
     await page.waitForTimeout(5000);
   });
 
-  test('should have keyboard navigation support', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Keyboard Navigation' },
-      { type: 'story', description: 'US-405: As a user, I want to navigate using keyboard only' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'keyboard' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'navigation' }
-    );
+  test('should have keyboard navigation support', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Keyboard Navigation');
+    await allure.story('US-405: As a user, I want to navigate using keyboard only');
+    await allure.severity('normal');
+    await allure.tags('keyboard', 'accessibility', 'navigation');
+    
     // Tabuler à travers les champs
     await page.keyboard.press('Tab'); // Name input
     await page.keyboard.type('Keyboard User');
@@ -144,15 +138,14 @@ test.describe('UI/UX Tests', () => {
     expect(emailValue).toContain('keyboard@test.com');
   });
 
-  test('should show loading indicators during operations', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Loading States' },
-      { type: 'story', description: 'US-406: As a user, I want to see when operations are in progress' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'loading' },
-      { type: 'tag', description: 'feedback' }
-    );
+  test('should show loading indicators during operations', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Loading States');
+    await allure.story('US-406: As a user, I want to see when operations are in progress');
+    await allure.severity('normal');
+    await allure.tags('loading', 'feedback');
+    
     // Intercepter et retarder les requêtes pour voir le loading
     await page.route('**/api/v1/users', async route => {
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -169,15 +162,14 @@ test.describe('UI/UX Tests', () => {
     await page.waitForSelector('.user-table', { timeout: 10000 });
   });
 
-  test('should display table headers correctly', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Data Display' },
-      { type: 'story', description: 'US-407: As a user, I want clear table headers' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'table' },
-      { type: 'tag', description: 'headers' }
-    );
+  test('should display table headers correctly', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Data Display');
+    await allure.story('US-407: As a user, I want clear table headers');
+    await allure.severity('minor');
+    await allure.tags('table', 'headers');
+    
     const expectedHeaders = ['ID', 'Nom', 'Email', 'Créé le', 'Actions'];
     
     for (const header of expectedHeaders) {
@@ -186,15 +178,14 @@ test.describe('UI/UX Tests', () => {
     }
   });
 
-  test('should format dates consistently', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Data Formatting' },
-      { type: 'story', description: 'US-408: As a user, I want consistent date formatting' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'formatting' },
-      { type: 'tag', description: 'dates' }
-    );
+  test('should format dates consistently', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Data Formatting');
+    await allure.story('US-408: As a user, I want consistent date formatting');
+    await allure.severity('minor');
+    await allure.tags('formatting', 'dates');
+    
     await page.waitForSelector('.user-table');
     
     // Vérifier le format des dates dans la colonne "Créé le"
@@ -206,15 +197,14 @@ test.describe('UI/UX Tests', () => {
     console.log(`Format de date: ${dateText}`);
   });
 
-  test('should scroll to top when editing user', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'User Experience' },
-      { type: 'feature', description: 'Navigation' },
-      { type: 'story', description: 'US-409: As a user, I want to auto-scroll to edit form' },
-      { type: 'severity', description: 'minor' },
-      { type: 'tag', description: 'scroll' },
-      { type: 'tag', description: 'navigation' }
-    );
+  test('should scroll to top when editing user', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('User Experience');
+    await allure.feature('Navigation');
+    await allure.story('US-409: As a user, I want to auto-scroll to edit form');
+    await allure.severity('minor');
+    await allure.tags('scroll', 'navigation');
+    
     await page.waitForSelector('.user-table');
     
     // Scroller vers le bas

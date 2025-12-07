@@ -1,20 +1,19 @@
 import { test, expect } from '@playwright/test';
+import { allure } from 'allure-playwright';
 
 test.describe('Accessibility Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('should have proper heading hierarchy', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'Semantic HTML' },
-      { type: 'story', description: 'US-601: As a screen reader user, I want proper heading structure' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'wcag' },
-      { type: 'tag', description: 'headings' }
-    );
+  test('should have proper heading hierarchy', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('Semantic HTML');
+    await allure.story('US-601: As a screen reader user, I want proper heading structure');
+    await allure.severity('critical');
+    await allure.tags('accessibility', 'wcag', 'headings');
+    
     // Vérifier la présence et l'ordre des headings
     const h1 = await page.locator('h1').count();
     expect(h1).toBeGreaterThan(0);
@@ -27,16 +26,14 @@ test.describe('Accessibility Tests', () => {
     console.log(`Found ${h2Count} H2 headings`);
   });
 
-  test('should have ARIA labels on interactive elements', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'ARIA Attributes' },
-      { type: 'story', description: 'US-602: As a screen reader user, I want labeled interactive elements' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'aria' },
-      { type: 'tag', description: 'wcag' }
-    );
+  test('should have ARIA labels on interactive elements', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('ARIA Attributes');
+    await allure.story('US-602: As a screen reader user, I want labeled interactive elements');
+    await allure.severity('critical');
+    await allure.tags('accessibility', 'aria', 'wcag');
+    
     await page.waitForSelector('.user-table');
     
     // Vérifier les boutons d'action
@@ -51,16 +48,14 @@ test.describe('Accessibility Tests', () => {
     expect(deleteText || await deleteButton.getAttribute('aria-label')).toBeTruthy();
   });
 
-  test('should have labels associated with form inputs', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'Form Accessibility' },
-      { type: 'story', description: 'US-603: As a screen reader user, I want labeled form fields' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'forms' },
-      { type: 'tag', description: 'labels' }
-    );
+  test('should have labels associated with form inputs', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('Form Accessibility');
+    await allure.story('US-603: As a screen reader user, I want labeled form fields');
+    await allure.severity('critical');
+    await allure.tags('accessibility', 'forms', 'labels');
+    
     // Vérifier les labels pour name et email
     const nameInput = page.locator('input[name="name"]');
     const emailInput = page.locator('input[name="email"]');
@@ -80,16 +75,14 @@ test.describe('Accessibility Tests', () => {
     }
   });
 
-  test('should have keyboard-accessible navigation', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'Keyboard Navigation' },
-      { type: 'story', description: 'US-604: As a keyboard user, I want to navigate without a mouse' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'keyboard' },
-      { type: 'tag', description: 'wcag' }
-    );
+  test('should have keyboard-accessible navigation', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('Keyboard Navigation');
+    await allure.story('US-604: As a keyboard user, I want to navigate without a mouse');
+    await allure.severity('critical');
+    await allure.tags('accessibility', 'keyboard', 'wcag');
+    
     // Tester la navigation au clavier
     await page.keyboard.press('Tab');
     
@@ -105,16 +98,14 @@ test.describe('Accessibility Tests', () => {
     await page.keyboard.press('Tab');
   });
 
-  test('should have proper table structure with headers', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'Table Accessibility' },
-      { type: 'story', description: 'US-605: As a screen reader user, I want properly structured tables' },
-      { type: 'severity', description: 'normal' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'tables' },
-      { type: 'tag', description: 'semantic' }
-    );
+  test('should have proper table structure with headers', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('Table Accessibility');
+    await allure.story('US-605: As a screen reader user, I want properly structured tables');
+    await allure.severity('normal');
+    await allure.tags('accessibility', 'tables', 'semantic');
+    
     await page.waitForSelector('.user-table');
     
     // Vérifier la structure de la table
@@ -130,16 +121,14 @@ test.describe('Accessibility Tests', () => {
     expect(thCount).toBeGreaterThan(0);
   });
 
-  test('should have accessible form validation messages', async ({ page }, testInfo) => {
-    testInfo.annotations.push(
-      { type: 'epic', description: 'Accessibility' },
-      { type: 'feature', description: 'Validation Feedback' },
-      { type: 'story', description: 'US-606: As a user, I want accessible validation messages' },
-      { type: 'severity', description: 'critical' },
-      { type: 'tag', description: 'accessibility' },
-      { type: 'tag', description: 'validation' },
-      { type: 'tag', description: 'forms' }
-    );
+  test('should have accessible form validation messages', async ({ page }) => {
+    // Allure metadata MUST be set first
+    await allure.epic('Accessibility');
+    await allure.feature('Validation Feedback');
+    await allure.story('US-606: As a user, I want accessible validation messages');
+    await allure.severity('critical');
+    await allure.tags('accessibility', 'validation', 'forms');
+    
     // Vérifier que le bouton est désactivé quand le formulaire est vide
     const submitButton = page.locator('button[type="submit"]');
     await expect(submitButton).toBeDisabled();
