@@ -276,8 +276,12 @@ jobs:
             "buildOrder": ${{ github.run_number }},
             "buildName": "${{ github.workflow }} #${{ github.run_number }}",
             "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/",
-            "reportName": "Allure Report - ${{ github.ref_name }}"
+            "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/",
+            "reportName": "Allure Report - ${{ github.ref_name }}",
+            "buildName": "Build #${{ github.run_number }}",
+            "jobName": "${{ github.job }}",
+            "triggeredBy": "${{ github.triggering_actor }}",
+            "triggerType": "${{ github.event_name }}"
           }
           EOF
           echo "✅ Executor metadata created"
@@ -287,19 +291,68 @@ jobs:
         if: always()
         run: |
           cat > allure-results/environment.properties <<EOF
+          # Test Infrastructure
           Browser=Chromium
+          Test.Framework=Playwright
+          Test.Reporter=Allure Playwright
+          
+          # CI/CD Environment
+          CI.Platform=GitHub Actions
+          CI.Runner.OS=${{ runner.os }}
+          CI.Runner.Arch=${{ runner.arch }}
+          CI.Runner.Image=ubuntu-24.04
+          CI.Runner.Version=2.329.0
+          
+          # Node.js Environment
           Node.Version=20
-          OS=${{ runner.os }}
-          Runner=ubuntu-latest
+          NPM.Version=$(npm --version 2>/dev/null || echo "N/A")
+          Playwright.Version=$(npx playwright --version 2>/dev/null | cut -d' ' -f2 || echo "N/A")
+          
+          # Kubernetes Cluster
+          Kubernetes.Provider=Kind
+          Kubernetes.Version=v1.27.3
+          Kubernetes.Cluster=kind
+          Kind.Version=v0.20.0
+          Kubectl.Version=v1.31.4
+          Ingress.Controller=NGINX
+          
+          # Application Stack
+          API.Image=mini-api:latest
+          Frontend.Image=mini-api-frontend:latest
+          Database=PostgreSQL
+          Database.Host=postgres-service
+          
+          # Git Information
           Repository=${{ github.repository }}
+          Repository.Owner=${{ github.repository_owner }}
           Branch=${{ github.ref_name }}
-          Commit=${{ github.sha }}
-          Author=${{ github.actor }}
+          Commit.SHA=${{ github.sha }}
+          Commit.Short=$(echo "${{ github.sha }}" | cut -c1-7)
+          Commit.Author=${{ github.actor }}
+          Commit.Message=${{ github.event.head_commit.message }}
+          
+          # Build Information
+          Workflow=${{ github.workflow }}
           Run.ID=${{ github.run_id }}
           Run.Number=${{ github.run_number }}
-          Workflow=${{ github.workflow }}
-          Kubernetes=Kind
-          Test.Framework=Playwright
+          Run.Attempt=${{ github.run_attempt }}
+          Job.Name=${{ github.job }}
+          Triggered.By=${{ github.triggering_actor }}
+          Trigger.Event=${{ github.event_name }}
+          
+          # Timing
+          Started.At=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Timezone=UTC
+          
+          # URLs
+          Repository.URL=${{ github.server_url }}/${{ github.repository }}
+          Actions.URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Report.URL=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          
+          # Additional Context
+          Base.Ref=${{ github.base_ref }}
+          Head.Ref=${{ github.head_ref }}
+          PR.Number=${{ github.event.pull_request.number }}
           EOF
           echo "✅ Environment metadata created"
           cat allure-results/environment.properties
