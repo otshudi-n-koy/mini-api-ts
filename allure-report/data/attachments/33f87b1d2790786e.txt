@@ -1,1 +1,0 @@
-✓ Swagger responded with status: 401

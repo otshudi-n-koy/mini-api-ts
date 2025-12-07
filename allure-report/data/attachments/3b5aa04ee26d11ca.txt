@@ -1,0 +1,2 @@
+✓ Swagger responded with status: 401
+⚠ Swagger requires authentication - skipping interactive tests
