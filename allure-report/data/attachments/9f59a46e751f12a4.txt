@@ -1,0 +1,6 @@
+Caractère testé: <, Valeur: Test<User1765335254061
+Caractère testé: >, Valeur: Test>User1765335254061
+Caractère testé: &, Valeur: Test&User1765335254061
+Caractère testé: ", Valeur: Test"User1765335254061
+Caractère testé: ', Valeur: Test'User1765335254061
+Caractère testé: /, Valeur: Test/User1765335254061
